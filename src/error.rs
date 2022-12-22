@@ -15,3 +15,4 @@ pub enum AppError {
     #[error("other error")]
     Other,
 }
+

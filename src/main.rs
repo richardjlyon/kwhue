@@ -1,13 +1,15 @@
 use kwhue::hue::bridge::Bridge;
 use mdns::Error;
+use kwhue::get_user_cfg;
 
 #[tokio::main]
 async fn main() -> Result<(), Error> {
     let bridge = Bridge::new().await;
 
-    // println!("{:#?}", bridge.config_info);
+    // bridge.new_user().await;
 
-    bridge.new_user("Richard").await;
+    let cfg = get_user_cfg();
+    println!("{:#?}", cfg);
 
     Ok(())
 }
