@@ -6,9 +6,7 @@ async fn main() -> Result<(), Error> {
     let bridge = Bridge::new().await;
     println!("IP: {}", bridge.ip_address);
 
-    let info = bridge.config().await.unwrap();
-
-    println!("{:#?}", info);
+    println!("{:#?}", bridge.config_info);
 
     Ok(())
 }
