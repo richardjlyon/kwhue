@@ -1,12 +1,13 @@
-use kwhue::hue::client::Bridge;
+use kwhue::hue::bridge::Bridge;
 use mdns::Error;
 
 #[tokio::main]
 async fn main() -> Result<(), Error> {
     let bridge = Bridge::new().await;
-    println!("IP: {}", bridge.ip_address);
 
-    println!("{:#?}", bridge.config_info);
+    // println!("{:#?}", bridge.config_info);
+
+    bridge.new_user("Richard").await;
 
     Ok(())
 }

@@ -74,8 +74,6 @@ fn to_ip_addr(record: &Record) -> Option<IpAddr> {
 async fn config_info(ip_address: &IpAddr) -> Result<ConfigInfo, AppError> {
     let url = format!("http://{}/api/0/config", ip_address);
 
-    println!("url: {}", url);
-
     let resp = reqwest::get(url)
         .await
         .map_err(|_| AppError::NetworkError)
