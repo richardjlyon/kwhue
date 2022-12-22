@@ -1,19 +1,21 @@
+pub mod client;
+
 use crate::error::AppError;
 use futures_util::{pin_mut, stream::StreamExt};
-use mdns::{Error, Record, RecordKind};
+use mdns::{Record, RecordKind};
 use std::{net::IpAddr, time::Duration};
 
 const SERVICE_NAME: &'static str = "_hue._tcp.local";
 
 /// Get the ip address of the Hue bridge
 pub async fn bridge_ipaddr() -> Result<IpAddr, AppError> {
-    let stream = mdns::discover::all(SERVICE_NAME, Duration::from_secs(1))
+    let responses = mdns::discover::all(SERVICE_NAME, Duration::from_secs(1))
         .map_err(|_| AppError::Other)
         .unwrap()
         .listen();
-    pin_mut!(stream);
+    pin_mut!(responses);
 
-    match stream.next().await {
+    match responses.next().await {
         Some(Ok(response)) => {
             let addr = response.records().filter_map(self::to_ip_addr).next();
             if let Some(addr) = addr {

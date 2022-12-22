@@ -9,6 +9,9 @@ pub enum AppError {
     #[error("no Hue bridge address found")]
     HueBridgeAddressNotFoundError,
 
+    #[error("API not found")]
+    APINotFound,
+
     #[error("other error")]
     Other,
 }

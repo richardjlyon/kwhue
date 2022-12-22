@@ -1,13 +1,14 @@
-use kwhue::hue::bridge_ipaddr;
+use kwhue::hue::client::Bridge;
 use mdns::Error;
-
-/// The hostname of the devices we are searching for.
-/// Every Chromecast will respond to the service name in this example.
 
 #[tokio::main]
 async fn main() -> Result<(), Error> {
-    let ip_addr = bridge_ipaddr().await.unwrap();
-    println!("Hue bridge: {}", ip_addr);
+    let bridge = Bridge::new().await;
+    println!("IP: {}", bridge.ip_address);
+
+    let info = bridge.config().await.unwrap();
+
+    println!("{:#?}", info);
 
     Ok(())
 }
