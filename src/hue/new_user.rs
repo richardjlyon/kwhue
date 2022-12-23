@@ -58,6 +58,8 @@ struct BasicError {
     description: String,
 }
 
+/// Configure a new user
+///
 impl Bridge {
     pub async fn new_user(&self) {
         let cfg = get_user_cfg();

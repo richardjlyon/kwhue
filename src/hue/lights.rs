@@ -12,12 +12,19 @@ use crate::hue::bridge::Bridge;
 type JsonMap = HashMap<u32, Light>;
 
 impl Bridge {
+    #[tracing::instrument(skip(self))]
     pub async fn lights(&self) -> Result<JsonMap, AppError> {
-        // ALEX how to pass deserialise type into get and deserialise there
-        let json_text = self.get("lights").await?;
-        let data: JsonMap = serde_json::from_str(&json_text).unwrap();
+        tracing::debug!("getting lights");
+        let data: JsonMap = self.get("lights").await?;
 
         Ok(data)
+    }
+
+    pub async fn get_state(&self, id: &u32) -> Result<(LightState), AppError> {
+        let url = format!("lights/{}", id);
+        let state_response: StateResponse = self.get(&url).await?;
+
+        Ok(state_response.state)
     }
 }
 
@@ -27,7 +34,7 @@ impl Bridge {
 pub struct Light {
     capabilities: Capabilities,
     config: Config,
-    pub state: State,
+    pub state: LightState,
     pub name: String,
 
     #[serde(rename = "manufacturername")]
@@ -88,15 +95,20 @@ struct Startup {
 }
 
 #[derive(Deserialize, Debug, Eq, PartialEq, Hash, Clone, Ord, PartialOrd)]
-pub struct State {
-    alert: String,
+pub struct LightState {
+    pub alert: String,
     #[serde(rename = "bri")]
-    brightness: u32,
+    pub brightness: u32,
     #[serde(rename = "colormode")]
-    colour_mode: Option<String>,
+    pub colour_mode: Option<String>,
     #[serde(rename = "ct")]
-    colour_temperature: Option<u32>,
-    mode: String,
+    pub colour_temperature: Option<u32>,
+    pub mode: String,
     pub on: bool,
     pub reachable: bool,
+}
+
+#[derive(Deserialize, Debug, Eq, PartialEq, Hash, Clone, Ord, PartialOrd)]
+pub struct StateResponse {
+    state: LightState,
 }

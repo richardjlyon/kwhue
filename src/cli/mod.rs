@@ -16,5 +16,11 @@ pub struct Cli {
 #[derive(Subcommand)]
 pub enum Commands {
     /// List all lights
-    Lights {},
+    List {},
+
+    /// Toggle light with id
+    Toggle {
+        /// Light ID
+        id: u32,
+    },
 }
