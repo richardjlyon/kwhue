@@ -1,5 +1,7 @@
+pub mod cli;
 pub mod error;
 pub mod hue;
+
 use crate::hue::new_user::UsernameResponse;
 
 const CONFIG_NAME: &'static str = "user";

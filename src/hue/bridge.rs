@@ -1,10 +1,11 @@
 use crate::error::AppError;
+use crate::get_user_cfg;
 use futures_util::{pin_mut, stream::StreamExt};
 use mdns::{Record, RecordKind};
 use reqwest::StatusCode;
 use serde::Deserialize;
 use std::{net::IpAddr, time::Duration};
-use crate::get_user_cfg;
+use tracing::info;
 
 /// A Hue Bridge client providing API commands
 ///
@@ -42,7 +43,11 @@ impl Bridge {
     // get the given endpoint
     pub async fn get(&self, endpoint: &str) -> Result<String, AppError> {
         let cfg = get_user_cfg();
-        let url = format!("http://{}/api/{}/{}", self.ip_address, cfg.username, endpoint);
+        let url = format!(
+            "http://{}/api/{}/{}",
+            self.ip_address, cfg.username, endpoint
+        );
+        info!(url, "fetching");
 
         let resp = reqwest::get(url)
             .await

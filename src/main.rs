@@ -1,16 +1,20 @@
-use kwhue::get_user_cfg;
+use clap::Parser;
+use kwhue::cli::{commands, Cli, Commands};
+use kwhue::error::AppError;
 use kwhue::hue::bridge::Bridge;
-use mdns::Error;
 
 #[tokio::main]
-async fn main() -> Result<(), Error> {
+async fn main() -> Result<(), AppError> {
+    tracing_subscriber::fmt::init();
+    let cli = Cli::parse();
+
     let bridge = Bridge::new().await;
 
+    match &cli.command {
+        Commands::Lights {} => commands::lights::all(&bridge).await,
+    }
+
     // bridge.new_user().await;
-
-    let lights = bridge.lights().await.unwrap();
-
-    println!("{:#?}", lights);
 
     Ok(())
 }

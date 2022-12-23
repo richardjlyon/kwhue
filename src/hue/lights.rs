@@ -1,20 +1,19 @@
 ///
-/// Get the lights
-use serde::{Deserialize, Serialize};
-use serde_json::Value;
+/// Implement Lights API
+///
+/// see: https://developers.meethue.com/develop/hue-api/lights-api/#get-new-lights
+///
+use serde::Deserialize;
 use std::collections::HashMap;
 
 use crate::error::AppError;
-use crate::get_user_cfg;
 use crate::hue::bridge::Bridge;
-use reqwest::StatusCode;
 
 type JsonMap = HashMap<u32, Light>;
 
 impl Bridge {
-    pub async fn lights(&self) -> Result<JsonMap, AppError>{
-
-        // ALEX how to pass deserialise type into get and deserialise there 
+    pub async fn lights(&self) -> Result<JsonMap, AppError> {
+        // ALEX how to pass deserialise type into get and deserialise there
         let json_text = self.get("lights").await?;
         let data: JsonMap = serde_json::from_str(&json_text).unwrap();
 
@@ -24,12 +23,12 @@ impl Bridge {
 
 /// Hue light schema
 ///
-#[derive(Deserialize, Debug)]
+#[derive(Deserialize, Debug, Eq, PartialEq, Hash, Clone, Ord, PartialOrd)]
 pub struct Light {
     capabilities: Capabilities,
     config: Config,
-    state: State,
-    name: String,
+    pub state: State,
+    pub name: String,
 
     #[serde(rename = "manufacturername")]
     manufacturer_name: String,
@@ -50,13 +49,13 @@ pub struct Light {
     unigue_id: String,
 }
 
-#[derive(Deserialize, Debug)]
+#[derive(Deserialize, Debug, Eq, PartialEq, Hash, Clone, Ord, PartialOrd)]
 pub struct Capabilities {
     certified: bool,
     control: Control,
 }
 
-#[derive(Deserialize, Debug)]
+#[derive(Deserialize, Debug, Eq, PartialEq, Hash, Clone, Ord, PartialOrd)]
 pub struct Control {
     #[serde(rename = "ct")]
     colour_temperature: Option<Range>,
@@ -68,13 +67,13 @@ pub struct Control {
     min_im_level: u32,
 }
 
-#[derive(Deserialize, Debug)]
+#[derive(Deserialize, Debug, Eq, PartialEq, Hash, Clone, Ord, PartialOrd)]
 pub struct Range {
     max: u32,
     min: u32,
 }
 
-#[derive(Deserialize, Debug)]
+#[derive(Deserialize, Debug, Eq, PartialEq, Hash, Clone, Ord, PartialOrd)]
 pub struct Config {
     archetype: String,
     direction: String,
@@ -82,13 +81,13 @@ pub struct Config {
     startup: Startup,
 }
 
-#[derive(Deserialize, Debug)]
+#[derive(Deserialize, Debug, Eq, PartialEq, Hash, Clone, Ord, PartialOrd)]
 struct Startup {
     configured: bool,
     mode: String,
 }
 
-#[derive(Deserialize, Debug)]
+#[derive(Deserialize, Debug, Eq, PartialEq, Hash, Clone, Ord, PartialOrd)]
 pub struct State {
     alert: String,
     #[serde(rename = "bri")]
@@ -98,6 +97,6 @@ pub struct State {
     #[serde(rename = "ct")]
     colour_temperature: Option<u32>,
     mode: String,
-    on: bool,
-    reachable: bool,
+    pub on: bool,
+    pub reachable: bool,
 }
