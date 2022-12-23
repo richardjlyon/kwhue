@@ -13,23 +13,11 @@ type JsonMap = HashMap<u32, Light>;
 
 impl Bridge {
     pub async fn lights(&self) -> Result<JsonMap, AppError>{
-        let cfg = get_user_cfg();
-        let url = format!("http://{}/api/{}/lights", self.ip_address, cfg.username);
 
-        let resp = reqwest::get(url)
-            .await
-            .map_err(|_| AppError::NetworkError)
-            .unwrap();
+        // ALEX how to pass deserialise type into get and deserialise there 
+        let json_text = self.get("lights").await?;
+        let data: JsonMap = serde_json::from_str(&json_text).unwrap();
 
-        let status = resp.status();
-
-        let data: JsonMap = match status {
-            StatusCode::OK => resp.json().await.map_err(|_| AppError::Other),
-            StatusCode::NOT_FOUND => Err(AppError::APINotFound),
-            _ => Err(AppError::Other),
-        }
-        .unwrap();
-        
         Ok(data)
     }
 }

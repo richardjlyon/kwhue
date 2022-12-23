@@ -4,15 +4,17 @@ use mdns::{Record, RecordKind};
 use reqwest::StatusCode;
 use serde::Deserialize;
 use std::{net::IpAddr, time::Duration};
+use crate::get_user_cfg;
 
 /// A Hue Bridge client providing API commands
-
+///
 pub struct Bridge {
     pub ip_address: IpAddr,
     pub config_info: ConfigInfo,
 }
 
-// Hue configuration information
+/// Hue configuration information
+///
 #[derive(Deserialize, Debug)]
 pub struct ConfigInfo {
     name: String,
@@ -34,6 +36,25 @@ impl Bridge {
         Self {
             ip_address,
             config_info,
+        }
+    }
+
+    // get the given endpoint
+    pub async fn get(&self, endpoint: &str) -> Result<String, AppError> {
+        let cfg = get_user_cfg();
+        let url = format!("http://{}/api/{}/{}", self.ip_address, cfg.username, endpoint);
+
+        let resp = reqwest::get(url)
+            .await
+            .map_err(|_| AppError::NetworkError)
+            .unwrap();
+
+        let status = resp.status();
+
+        match status {
+            StatusCode::OK => Ok(resp.text().await.map_err(|_| AppError::Other)?),
+            StatusCode::NOT_FOUND => Err(AppError::APINotFound),
+            _ => Err(AppError::Other),
         }
     }
 }
