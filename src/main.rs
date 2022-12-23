@@ -1,6 +1,6 @@
+use kwhue::get_user_cfg;
 use kwhue::hue::bridge::Bridge;
 use mdns::Error;
-use kwhue::get_user_cfg;
 
 #[tokio::main]
 async fn main() -> Result<(), Error> {
@@ -8,8 +8,9 @@ async fn main() -> Result<(), Error> {
 
     // bridge.new_user().await;
 
-    let cfg = get_user_cfg();
-    println!("{:#?}", cfg);
+    let lights = bridge.lights().await.unwrap();
+
+    println!("{:#?}", lights);
 
     Ok(())
 }

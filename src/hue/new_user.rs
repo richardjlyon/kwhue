@@ -1,19 +1,18 @@
 ///
 /// Create a new Hue Bridge user
 ///
-/// A user is created with a name. After creation, the user has to press the 
-/// botton on the bridge to confirm they are physically present. The bridge 
+/// A user is created with a name. After creation, the user has to press the
+/// botton on the bridge to confirm they are physically present. The bridge
 /// returns a code, which is stored in a config file.
-
 use std::collections::HashMap;
 use std::io::Write;
 
 use crate::error::AppError;
 use crate::hue::bridge::Bridge;
-use reqwest::StatusCode;
-use std::{thread, time};
-use serde::{Serialize, Deserialize};
 use crate::{get_user_cfg, store_user_cfg};
+use reqwest::StatusCode;
+use serde::{Deserialize, Serialize};
+use std::{thread, time};
 
 /// json example
 ///
@@ -26,19 +25,22 @@ enum Response<T, E> {
     Success(Success<T>),
 }
 
-
 #[derive(Deserialize, Debug)]
 struct Success<T> {
-    success: T,   
+    success: T,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct UsernameResponse {
-    username: String,
+    pub username: String,
 }
 
 impl ::std::default::Default for UsernameResponse {
-    fn default() -> Self { Self { username: "".into() }}
+    fn default() -> Self {
+        Self {
+            username: "".into(),
+        }
+    }
 }
 
 #[derive(Deserialize, Debug)]
@@ -58,12 +60,11 @@ struct BasicError {
 
 impl Bridge {
     pub async fn new_user(&self) {
-        
         let cfg = get_user_cfg();
 
         let url = format!("http://{}/api", self.ip_address);
         let client = reqwest::Client::new();
-        
+
         let mut params = HashMap::new();
         params.insert("devicetype", format!("my_hue_app#iphone rust_app"));
 
@@ -87,12 +88,12 @@ impl Bridge {
                 Response::Error(e) => {
                     if e.error.error_type != 101 {
                         println!("Error: {}", e.error.description);
-                    } 
+                    }
                     tokio::time::sleep(one_second).await;
                     print!(".");
                     std::io::stdout().flush().unwrap();
                 }
-                Response::Success(s) => break s.success
+                Response::Success(s) => break s.success,
             }
         };
 
