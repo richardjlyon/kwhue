@@ -3,7 +3,7 @@
 ///
 /// see: https://developers.meethue.com/develop/hue-api/lights-api/#get-new-lights
 ///
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 
 use crate::error::AppError;
@@ -13,14 +13,14 @@ type JsonMap = HashMap<u32, Light>;
 
 impl Bridge {
     #[tracing::instrument(skip(self))]
-    pub async fn lights(&self) -> Result<JsonMap, AppError> {
+    pub async fn get_lights(&self) -> Result<JsonMap, AppError> {
         tracing::debug!("getting lights");
         let data: JsonMap = self.get("lights").await?;
 
         Ok(data)
     }
 
-    pub async fn get_state(&self, id: &u32) -> Result<(LightState), AppError> {
+    pub async fn get_state_for_light(&self, id: &u32) -> Result<LightState, AppError> {
         let url = format!("lights/{}", id);
         let state_response: StateResponse = self.get(&url).await?;
 
@@ -94,7 +94,7 @@ struct Startup {
     mode: String,
 }
 
-#[derive(Deserialize, Debug, Eq, PartialEq, Hash, Clone, Ord, PartialOrd)]
+#[derive(Serialize, Deserialize, Debug, Eq, PartialEq, Hash, Clone, Ord, PartialOrd)]
 pub struct LightState {
     pub alert: String,
     #[serde(rename = "bri")]

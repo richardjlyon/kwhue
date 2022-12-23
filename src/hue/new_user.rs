@@ -4,15 +4,15 @@
 /// A user is created with a name. After creation, the user has to press the
 /// botton on the bridge to confirm they are physically present. The bridge
 /// returns a code, which is stored in a config file.
+use reqwest::StatusCode;
+use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::io::Write;
+use std::time;
 
 use crate::error::AppError;
 use crate::hue::bridge::Bridge;
-use crate::{get_user_cfg, store_user_cfg};
-use reqwest::StatusCode;
-use serde::{Deserialize, Serialize};
-use std::{thread, time};
+use crate::store_user_cfg;
 
 /// json example
 ///
@@ -54,7 +54,6 @@ struct Error<T> {
 struct BasicError {
     #[serde(rename = "type")]
     error_type: u32,
-    address: String,
     description: String,
 }
 
@@ -62,13 +61,11 @@ struct BasicError {
 ///
 impl Bridge {
     pub async fn new_user(&self) {
-        let cfg = get_user_cfg();
-
         let url = format!("http://{}/api", self.ip_address);
         let client = reqwest::Client::new();
 
         let mut params = HashMap::new();
-        params.insert("devicetype", format!("my_hue_app#iphone rust_app"));
+        params.insert("devicetype", "kwhue_app rust_app");
 
         let one_second = time::Duration::from_secs(1);
 

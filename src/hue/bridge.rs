@@ -7,6 +7,8 @@ use serde::{de::DeserializeOwned, Deserialize};
 use std::{net::IpAddr, time::Duration};
 use tracing::info;
 
+use super::lights::LightState;
+
 /// A Hue Bridge client providing API commands
 ///
 #[derive(Debug)]
@@ -41,6 +43,7 @@ impl Bridge {
 ///
 impl Bridge {
     /// get the given endpoint
+    ///
     #[tracing::instrument(skip(self))]
     pub async fn get<T: DeserializeOwned>(&self, endpoint: &str) -> Result<T, AppError> {
         let cfg = get_user_cfg();
@@ -64,12 +67,31 @@ impl Bridge {
             _ => Err(AppError::Other),
         }
     }
+
+    /// put to the given endpoint
+    ///
+    pub async fn put(&self, endpoint: &str, data: &LightState) -> Result<(), AppError> {
+        let cfg = get_user_cfg();
+        let url = format!(
+            "http://{}/api/{}/{}",
+            self.ip_address, cfg.username, endpoint
+        );
+        let client = reqwest::Client::new();
+        let body_json = serde_json::to_string(data).unwrap();
+        let resp = client.put(&url).body(body_json).send().await.unwrap();
+
+        match resp.status() {
+            StatusCode::OK => Ok(()),
+            StatusCode::NOT_FOUND => Err(AppError::APINotFound),
+            _ => Err(AppError::Other),
+        }
+    }
 }
 
 /// get the Hue Bridge ip address
 ///
 pub async fn bridge_ipaddr() -> Result<IpAddr, AppError> {
-    const SERVICE_NAME: &'static str = "_hue._tcp.local";
+    const SERVICE_NAME: &str = "_hue._tcp.local";
 
     let responses = mdns::discover::all(SERVICE_NAME, Duration::from_secs(1))
         .map_err(|_| AppError::Other)
@@ -81,7 +103,8 @@ pub async fn bridge_ipaddr() -> Result<IpAddr, AppError> {
         Some(Ok(response)) => {
             let addr = response.records().filter_map(self::to_ip_addr).next();
             if let Some(addr) = addr {
-                return Ok(addr);
+                println!("{}", addr.to_string());
+                Ok(addr)
             } else {
                 Err(AppError::HueBridgeAddressNotFoundError)
             }

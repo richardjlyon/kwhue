@@ -4,7 +4,7 @@ pub mod hue;
 
 use crate::hue::new_user::UsernameResponse;
 
-const CONFIG_NAME: &'static str = "user";
+const CONFIG_NAME: &str = "user";
 
 /// Get the user configuration data
 pub fn get_user_cfg() -> UsernameResponse {
