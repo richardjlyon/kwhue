@@ -12,7 +12,6 @@ use std::time;
 
 use crate::error::AppError;
 use crate::hue::bridge::Bridge;
-use crate::store_user_cfg;
 
 /// json example
 ///
@@ -31,16 +30,8 @@ struct Success<T> {
 }
 
 #[derive(Serialize, Deserialize, Debug)]
-pub struct UsernameResponse {
-    pub username: String,
-}
-
-impl ::std::default::Default for UsernameResponse {
-    fn default() -> Self {
-        Self {
-            username: "".into(),
-        }
-    }
+pub struct AuthKeyResponse {
+    pub auth_key: String,
 }
 
 #[derive(Deserialize, Debug)]
@@ -57,10 +48,10 @@ struct BasicError {
     description: String,
 }
 
-/// Configure a new user
+/// Create a new bridge auth key
 ///
 impl Bridge {
-    pub async fn new_user(&self) {
+    pub async fn create_new_auth_key(&self) -> String {
         let url = format!("http://{}/api", self.ip_address);
         let client = reqwest::Client::new();
 
@@ -72,10 +63,10 @@ impl Bridge {
         print!("Press link button");
         std::io::stdout().flush().unwrap();
 
-        let username_response = loop {
+        let response = loop {
             let resp = client.post(&url).json(&params).send().await.unwrap();
             let status = resp.status();
-            let mut data: Vec<Response<UsernameResponse, BasicError>> = match status {
+            let mut data: Vec<Response<AuthKeyResponse, BasicError>> = match status {
                 StatusCode::OK => resp.json().await.map_err(|_| AppError::Other),
                 StatusCode::NOT_FOUND => Err(AppError::APINotFound),
                 _ => Err(AppError::Other),
@@ -96,7 +87,6 @@ impl Bridge {
             }
         };
 
-        store_user_cfg(&username_response);
-        println!("\nUser created, id: {}", username_response.username);
+        response.auth_key
     }
 }

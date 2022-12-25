@@ -1,5 +1,5 @@
 use clap::Parser;
-use kwhue::cli::{commands::lights, AdminSubcommands, Cli, Commands, LightSubcommands};
+use kwhue::cli::{commands::*, AdminSubcommands, Cli, Commands, LightSubcommands};
 use kwhue::error::AppError;
 use kwhue::hue::bridge::Bridge;
 
@@ -7,18 +7,21 @@ use kwhue::hue::bridge::Bridge;
 #[tracing::instrument]
 async fn main() -> Result<(), AppError> {
     tracing_subscriber::fmt::init();
+
     let bridge = Bridge::new().await;
 
     let cli = Cli::parse();
+
     match &cli.command {
         Commands::Admin(u) => match u {
-            AdminSubcommands::User {} => bridge.new_user().await,
+            AdminSubcommands::Init {} => admin::init().await,
+            AdminSubcommands::Check {} => admin::check(&bridge).await,
         },
         Commands::Light(l) => match l {
-            LightSubcommands::List {} => lights::all(&bridge).await,
-            LightSubcommands::Toggle { id } => lights::toggle(&bridge, id).await,
-            LightSubcommands::On { id } => lights::on(&bridge, id).await,
-            LightSubcommands::Off { id } => lights::off(&bridge, id).await,
+            LightSubcommands::List {} => light::all(&bridge).await,
+            LightSubcommands::Toggle { id } => light::toggle(&bridge, id).await,
+            LightSubcommands::On { id } => light::on(&bridge, id).await,
+            LightSubcommands::Off { id } => light::off(&bridge, id).await,
         },
     };
 

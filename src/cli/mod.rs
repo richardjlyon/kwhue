@@ -33,8 +33,11 @@ pub enum Commands {
 
 #[derive(Subcommand)]
 pub enum AdminSubcommands {
-    /// Add a new user
-    User {},
+    /// Initialise a Hue bridge
+    Init {},
+
+    /// Check Hue bridge status
+    Check {},
 }
 
 #[derive(Subcommand)]

@@ -1,11 +1,15 @@
+use crate::config::*;
 use crate::error::AppError;
-use crate::get_user_cfg;
+use colored::Colorize;
 use futures_util::{pin_mut, stream::StreamExt};
 use mdns::{Record, RecordKind};
 use reqwest::StatusCode;
 use serde::{de::DeserializeOwned, Deserialize};
 use std::{net::IpAddr, time::Duration};
-use tracing::info;
+use tokio::time::timeout;
+use tracing::{info, trace};
+
+use simple_mdns::async_discovery::OneShotMdnsResolver;
 
 use super::lights::LightState;
 
@@ -14,7 +18,9 @@ use super::lights::LightState;
 #[derive(Debug)]
 pub struct Bridge {
     pub ip_address: IpAddr,
-    pub config_info: ConfigInfo,
+    pub auth_key: String,
+    //     pub config_info: ConfigInfo,
+    //     pub client: reqwest::Client,
 }
 
 /// Hue configuration information
@@ -25,16 +31,30 @@ pub struct ConfigInfo {
     pub bridge_id: String,
 }
 
-/// Create a new instance
+/// Create a new Hue bridge instance
 ///
 impl Bridge {
     pub async fn new() -> Self {
-        let ip_address = bridge_ipaddr().await.unwrap();
-        let config_info = config_info(&ip_address).await.unwrap();
+        let cfg = get_app_cfg();
+
+        if cfg.bridge_ipaddr.is_none() {
+            println!("{}: {}", "warning".yellow(), "app not initialised");
+            crate::cli::commands::admin::init().await;
+        }
+
+        let cfg = get_app_cfg();
+        let ip_address = cfg.bridge_ipaddr.unwrap();
+
+        // let config_info = config_info(&ip_address).await.unwrap();
+        // let client = reqwest::Client::builder()
+        //     .timeout(Duration::new(5, 0))
+        //     .build()
+        //     .unwrap();
 
         Self {
             ip_address,
-            config_info,
+            // config_info,
+            // client,
         }
     }
 }
@@ -46,18 +66,31 @@ impl Bridge {
     ///
     #[tracing::instrument(skip(self))]
     pub async fn get<T: DeserializeOwned>(&self, endpoint: &str) -> Result<T, AppError> {
-        let cfg = get_user_cfg();
+        let cfg = get_app_cfg();
+        // TODO check auth_key is valid and remove unwrap below
         let url = format!(
             "http://{}/api/{}/{}",
-            self.ip_address, cfg.username, endpoint
+            self.ip_address,
+            cfg.auth_key.unwrap(),
+            endpoint
         );
 
         info!(url, "fetching");
 
-        let resp = reqwest::get(url)
+        let client = reqwest::Client::builder()
+            // .timeout(Duration::new(5, 0))
+            .build()
+            .unwrap();
+
+        tracing::debug!("starting get");
+        let resp = client
+            .get(url)
+            .timeout(std::time::Duration::from_millis(500))
+            .send()
             .await
             .map_err(|_| AppError::NetworkError)
             .unwrap();
+        tracing::debug!("ending get");
 
         let status = resp.status();
 
@@ -71,10 +104,13 @@ impl Bridge {
     /// put to the given endpoint
     ///
     pub async fn put(&self, endpoint: &str, data: &LightState) -> Result<(), AppError> {
-        let cfg = get_user_cfg();
+        let cfg = get_app_cfg();
+        // TODO check auth_key is valid and remove unwrap below
         let url = format!(
             "http://{}/api/{}/{}",
-            self.ip_address, cfg.username, endpoint
+            self.ip_address,
+            cfg.auth_key.unwrap(),
+            endpoint
         );
         let client = reqwest::Client::new();
         let body_json = serde_json::to_string(data).unwrap();
@@ -90,12 +126,12 @@ impl Bridge {
 
 /// get the Hue Bridge ip address
 ///
-pub async fn bridge_ipaddr() -> Result<IpAddr, AppError> {
+pub async fn get_bridge_ipaddr() -> Result<IpAddr, AppError> {
     const SERVICE_NAME: &str = "_hue._tcp.local";
 
+    tracing::info!("discovering...");
     let responses = mdns::discover::all(SERVICE_NAME, Duration::from_secs(1))
-        .map_err(|_| AppError::Other)
-        .unwrap()
+        .map_err(|_| AppError::Other)?
         .listen();
     pin_mut!(responses);
 
@@ -103,7 +139,7 @@ pub async fn bridge_ipaddr() -> Result<IpAddr, AppError> {
         Some(Ok(response)) => {
             let addr = response.records().filter_map(self::to_ip_addr).next();
             if let Some(addr) = addr {
-                println!("{}", addr.to_string());
+                println!("Got address {:?}", addr);
                 Ok(addr)
             } else {
                 Err(AppError::HueBridgeAddressNotFoundError)
@@ -122,25 +158,33 @@ fn to_ip_addr(record: &Record) -> Option<IpAddr> {
     }
 }
 
-/// read Hue bridge configuration info
+/// Reads the Hue bridge configuration info
 ///
-async fn config_info(ip_address: &IpAddr) -> Result<ConfigInfo, AppError> {
+pub async fn config_info(ip_address: &IpAddr) -> Result<ConfigInfo, AppError> {
+    let client = reqwest::Client::builder().build().unwrap();
     let url = format!("http://{}/api/0/config", ip_address);
+    let resp = client
+        .get(url)
+        .timeout(std::time::Duration::from_millis(5000))
+        .send()
+        .await;
 
-    let resp = reqwest::get(url)
-        .await
-        .map_err(|_| AppError::NetworkError)
-        .unwrap();
+    // intercept timeout due to bad ip address
+    let resp = match resp {
+        Ok(resp) => resp,
+        Err(err) => {
+            if err.is_timeout() {
+                return Err(AppError::HueBridgeTimeout);
+            } else {
+                return Err(AppError::Other);
+            }
+        }
+    };
 
-    let status = resp.status();
-    let text = match status {
-        StatusCode::OK => resp.text().await.map_err(|_| AppError::Other),
-        StatusCode::NOT_FOUND => Err(AppError::APINotFound),
-        _ => Err(AppError::Other),
+    // intercept misconfiguration and return configuration info
+    let text = resp.text().await.expect("couldn't get text");
+    match serde_json::from_str(&text) {
+        Ok(config_info) => Ok(config_info),
+        Err(_) => Err(AppError::HueBridgeMisconfigured),
     }
-    .unwrap();
-
-    let config_info: ConfigInfo = serde_json::from_str(&text).unwrap();
-
-    Ok(config_info)
 }
