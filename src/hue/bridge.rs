@@ -5,7 +5,6 @@ use crate::config::*;
 use crate::error::AppError;
 use colored::Colorize;
 use futures_util::{pin_mut, stream::StreamExt};
-use itertools::Itertools;
 use mdns::{Record, RecordKind};
 use reqwest::StatusCode;
 use serde::{de::DeserializeOwned, Deserialize, Serialize};
@@ -88,11 +87,6 @@ impl ConfigInfo {
 impl Bridge {
     /// Create a new Hue bridge instance
     pub async fn new() -> Self {
-        if let BridgeStatus::DISCONNECTED = bridge_status().await {
-            println!("{}: {}\n", "error".red().bold(), "hub disconnected".bold());
-            std::process::exit(1);
-        };
-
         if !is_configured() {
             match configure().await {
                 Ok(_) => {}
@@ -115,12 +109,13 @@ impl Bridge {
             client,
         }
     }
+}
 
+impl Bridge {
     /// Gets an endpoint response and deserialises it.
     #[tracing::instrument(skip(self))]
     pub async fn get<T: DeserializeOwned>(&self, endpoint: &str) -> Result<T, AppError> {
         let cfg = get_app_cfg();
-        // TODO check auth_key is valid and remove unwrap below
         let url = format!(
             "http://{}/api/{}/{}",
             self.ip_address,
@@ -130,12 +125,8 @@ impl Bridge {
 
         trace!(url, "fetching");
 
-        let client = reqwest::Client::builder()
-            // .timeout(Duration::new(5, 0))
-            .build()
-            .unwrap();
-
-        let resp = client
+        let resp = self
+            .client
             .get(url)
             .timeout(std::time::Duration::from_millis(500))
             .send()
@@ -151,20 +142,20 @@ impl Bridge {
             _ => Err(AppError::Other),
         }
     }
+}
 
+impl Bridge {
     /// Puts the given data to the given endpoint
     pub async fn put(&self, endpoint: &str, data: &LightState) -> Result<(), AppError> {
         let cfg = get_app_cfg();
-        // TODO check auth_key is valid and remove unwrap below
         let url = format!(
             "http://{}/api/{}/{}",
             self.ip_address,
             cfg.auth_key.unwrap(),
             endpoint
         );
-        let client = reqwest::Client::new();
         let body_json = serde_json::to_string(data).unwrap();
-        let resp = client.put(&url).body(body_json).send().await.unwrap();
+        let resp = self.client.put(&url).body(body_json).send().await.unwrap();
 
         match resp.status() {
             StatusCode::OK => Ok(()),
