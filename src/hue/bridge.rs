@@ -11,7 +11,7 @@ use serde::{de::DeserializeOwned, Deserialize, Serialize};
 use std::io::Write;
 use std::{collections::HashMap, net::IpAddr, time::Duration};
 use tokio::time::timeout;
-use tracing::info;
+use tracing::trace;
 
 /// Represents a response from the bridge
 ///
@@ -63,13 +63,33 @@ pub enum BridgeStatus {
 pub struct Bridge {
     pub ip_address: IpAddr,
     pub auth_key: String,
+    pub client: reqwest::Client,
     //     pub config_info: ConfigInfo,
-    //     pub client: reqwest::Client,
+}
+
+#[derive(Deserialize, Debug)]
+pub struct ConfigInfo {
+    #[serde(rename = "bridgeid")]
+    pub bridge_id: String,
+    pub apiversion: String,
+    pub swversion: String,
+    pub ipaddress: String,
+}
+
+impl ConfigInfo {
+    pub fn software_version(&self) -> String {
+        format!("{}.{}", self.apiversion, self.swversion)
+    }
 }
 
 impl Bridge {
     /// Create a new Hue bridge instance
     pub async fn new() -> Self {
+        if let BridgeStatus::DISCONNECTED = bridge_status().await {
+            println!("{}: {}\n", "error".red().bold(), "hub disconnected".bold());
+            std::process::exit(1);
+        };
+
         if !is_configured() {
             match configure().await {
                 Ok(_) => {}
@@ -84,9 +104,12 @@ impl Bridge {
         let ip_address = cfg.bridge_ipaddr.unwrap();
         let auth_key = cfg.auth_key.unwrap();
 
+        let client = reqwest::Client::builder().build().unwrap();
+
         Self {
             ip_address,
             auth_key,
+            client,
         }
     }
 
@@ -102,14 +125,13 @@ impl Bridge {
             endpoint
         );
 
-        info!(url, "fetching");
+        trace!(url, "fetching");
 
         let client = reqwest::Client::builder()
             // .timeout(Duration::new(5, 0))
             .build()
             .unwrap();
 
-        tracing::debug!("starting get");
         let resp = client
             .get(url)
             .timeout(std::time::Duration::from_millis(500))
@@ -117,7 +139,6 @@ impl Bridge {
             .await
             .map_err(|_| AppError::NetworkError)
             .unwrap();
-        tracing::debug!("ending get");
 
         let status = resp.status();
 
@@ -147,6 +168,12 @@ impl Bridge {
             StatusCode::NOT_FOUND => Err(AppError::APINotFound),
             _ => Err(AppError::Other),
         }
+    }
+
+    pub async fn config_info(&self) -> Result<ConfigInfo, AppError> {
+        let data: ConfigInfo = self.get("config").await?;
+
+        Ok(data)
     }
 }
 
@@ -252,6 +279,15 @@ pub async fn create_new_auth_key(ip_addr: IpAddr) -> Result<String, AppError> {
     };
 
     Ok(response.username)
+}
+
+///
+pub async fn bridge_status() -> BridgeStatus {
+    let result = get_bridge_ipaddr().await;
+    match result {
+        Ok(_) => BridgeStatus::CONNECTED,
+        Err(_) => BridgeStatus::DISCONNECTED,
+    }
 }
 
 fn to_ip_addr(record: &Record) -> Option<IpAddr> {

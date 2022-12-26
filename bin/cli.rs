@@ -15,7 +15,7 @@ async fn main() -> Result<(), AppError> {
     match &cli.command {
         Commands::Admin(u) => match u {
             AdminSubcommands::Reset {} => admin::reset().await,
-            AdminSubcommands::Check {} => admin::check(&bridge).await,
+            AdminSubcommands::Check {} => admin::info(&bridge).await,
         },
         Commands::Light(l) => match l {
             LightSubcommands::List {} => light::all(&bridge).await,
