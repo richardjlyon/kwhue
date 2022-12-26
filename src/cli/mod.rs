@@ -33,8 +33,8 @@ pub enum Commands {
 
 #[derive(Subcommand)]
 pub enum AdminSubcommands {
-    /// Initialise a Hue bridge
-    Init {},
+    /// Reset the Hue bridge
+    Reset {},
 
     /// Check Hue bridge status
     Check {},

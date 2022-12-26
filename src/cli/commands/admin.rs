@@ -11,38 +11,22 @@ use crate::{
 };
 use colored::Colorize;
 use std::io::Write;
-use std::time::Duration;
-use tokio::time::timeout;
 
-/// Initialise the app
+/// Reset the app
 ///
 /// Gets the Hue bridge ip address, checks it is configured properly, obtains
 /// an authorisation key, and stores the results in the configuration file.
 ///   
-pub async fn init() {
+pub async fn reset() {
     // reset config file
-    let mut cfg = AppConfig::default();
+    let cfg = AppConfig::default();
     store_app_cfg(&cfg);
 
-    // set the IP address
-    let timeout = timeout(Duration::from_secs(5), get_bridge_ipaddr()).await;
-
-    if timeout.is_err() {
-        println!("{}: {}", "error".red(), "hub timed out");
-        std::process::exit(1);
-    }
-
-    let ip_address = match timeout.unwrap() {
-        Ok(ip_addr) => ip_addr,
-        Err(_) => return,
-    };
-
-    cfg.bridge_ipaddr = Some(ip_address);
-    store_app_cfg(&cfg);
-
-    // set the authorisation key
-
-    // display the results
+    println!(
+        "{}: {}",
+        "info".green().bold(),
+        "app reset, restart app to reinitialse".bold()
+    );
 }
 
 /// Print the status of the Hue bridge to the terminal
