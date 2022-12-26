@@ -5,6 +5,7 @@ use crate::config::*;
 use crate::error::AppError;
 use colored::Colorize;
 use futures_util::{pin_mut, stream::StreamExt};
+use itertools::Itertools;
 use mdns::{Record, RecordKind};
 use reqwest::StatusCode;
 use serde::{de::DeserializeOwned, Deserialize, Serialize};
@@ -78,7 +79,9 @@ pub struct ConfigInfo {
 
 impl ConfigInfo {
     pub fn software_version(&self) -> String {
-        format!("{}.{}", self.apiversion, self.swversion)
+        // 1.55.0 -> 1.55
+        let parts: Vec<&str> = self.apiversion.split(".").collect();
+        format!("{}.{}.{}", parts[0], parts[1], self.swversion)
     }
 }
 
