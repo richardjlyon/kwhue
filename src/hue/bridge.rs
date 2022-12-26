@@ -26,21 +26,25 @@ enum Response<T, E> {
     Success(Success<T>),
 }
 
+/// Bridge 'error' response
 #[derive(Deserialize, Debug)]
 struct Error<T> {
     error: T,
 }
 
+/// Bridge 'sucess' response
 #[derive(Deserialize, Debug)]
 struct Success<T> {
     success: T,
 }
 
+/// Bridge authorisation key data
 #[derive(Serialize, Deserialize, Debug)]
 pub struct AuthKeyResponse {
     pub username: String,
 }
 
+/// Bridge error data
 #[derive(Deserialize, Debug)]
 struct BasicError {
     #[serde(rename = "type")]
@@ -63,12 +67,8 @@ pub struct Bridge {
     //     pub client: reqwest::Client,
 }
 
-/// Hue configuration information
-///
-
-/// Create a new Hue bridge instance
-///
 impl Bridge {
+    /// Create a new Hue bridge instance
     pub async fn new() -> Self {
         if !is_configured() {
             match configure().await {
@@ -91,13 +91,13 @@ impl Bridge {
     }
 }
 
-/// Return true if config file contains an ip address and auth key
-///
+/// Return true if config file contains an ip address and auth key.
 fn is_configured() -> bool {
     let cfg = get_app_cfg();
     cfg.bridge_ipaddr.is_some() && cfg.auth_key.is_some()
 }
 
+/// Gets the IP address, creates an auth_key, and saves both to the config file.
 async fn configure() -> Result<(), AppError> {
     let mut cfg = get_app_cfg();
 
@@ -119,11 +119,8 @@ async fn configure() -> Result<(), AppError> {
     Ok(())
 }
 
-/// Get an endpoint
-///
 impl Bridge {
-    /// get the given endpoint
-    ///
+    /// Gets an endpoint response and deserialises it.
     #[tracing::instrument(skip(self))]
     pub async fn get<T: DeserializeOwned>(&self, endpoint: &str) -> Result<T, AppError> {
         let cfg = get_app_cfg();
@@ -161,8 +158,7 @@ impl Bridge {
         }
     }
 
-    /// put to the given endpoint
-    ///
+    /// Puts the given data to the given endpoint
     pub async fn put(&self, endpoint: &str, data: &LightState) -> Result<(), AppError> {
         let cfg = get_app_cfg();
         // TODO check auth_key is valid and remove unwrap below
@@ -184,40 +180,42 @@ impl Bridge {
     }
 }
 
-/// get the Hue Bridge ip address
-///
+// pub async fn is_connected() -> Result<BridgeStatus, AppError> {}
+
+/// Gets the Hue Bridge ip address.
 pub async fn get_bridge_ipaddr() -> Result<IpAddr, AppError> {
     const SERVICE_NAME: &str = "_hue._tcp.local";
 
-    tracing::info!("discovering...");
     let responses = mdns::discover::all(SERVICE_NAME, Duration::from_secs(1))
         .map_err(|_| AppError::Other)?
         .listen();
+
     pin_mut!(responses);
 
-    match responses.next().await {
-        Some(Ok(response)) => {
-            let addr = response.records().filter_map(self::to_ip_addr).next();
-            if let Some(addr) = addr {
-                println!("Got address {:?}", addr);
-                Ok(addr)
-            } else {
-                Err(AppError::HueBridgeAddressNotFoundError)
+    // if the hub is disconnected, it will timeout and block the app
+    let response = match timeout(Duration::from_secs(5), responses.next()).await {
+        Ok(r) => Ok(r),
+        Err(_) => Err(AppError::HueBridgeTimeout),
+    };
+
+    match response {
+        Ok(r) => match r {
+            Some(Ok(response)) => {
+                let addr = response.records().filter_map(self::to_ip_addr).next();
+                if let Some(addr) = addr {
+                    Ok(addr)
+                } else {
+                    Err(AppError::HueBridgeAddressNotFoundError)
+                }
             }
-        }
-        Some(Err(_)) => Err(AppError::Other),
-        None => Err(AppError::HueBridgeNotFoundError),
+            Some(Err(_)) => todo!(),
+            None => Err(AppError::Other),
+        },
+        Err(err) => Err(err),
     }
 }
 
-fn to_ip_addr(record: &Record) -> Option<IpAddr> {
-    match record.kind {
-        RecordKind::A(addr) => Some(addr.into()),
-        RecordKind::AAAA(addr) => Some(addr.into()),
-        _ => None,
-    }
-}
-/// Create a hub authorisation key.
+/// Creates a hub authorisation key.
 ///
 /// See [Hue Configuration API](https://developers.meethue.com/develop/hue-api/7-configuration-api/)
 pub async fn create_new_auth_key(ip_addr: IpAddr) -> Result<String, AppError> {
@@ -259,4 +257,12 @@ pub async fn create_new_auth_key(ip_addr: IpAddr) -> Result<String, AppError> {
     };
 
     Ok(response.username)
+}
+
+fn to_ip_addr(record: &Record) -> Option<IpAddr> {
+    match record.kind {
+        RecordKind::A(addr) => Some(addr.into()),
+        RecordKind::AAAA(addr) => Some(addr.into()),
+        _ => None,
+    }
 }
