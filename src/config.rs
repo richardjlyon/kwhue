@@ -1,24 +1,14 @@
 /// Handles app configuration
 ///
-use crate::hue::new_user::AuthKeyResponse;
 use serde::{Deserialize, Serialize};
-use std::net::{IpAddr, Ipv4Addr};
+use std::net::IpAddr;
 
 const CONFIG_NAME: &str = "kwhue";
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Default)]
 pub struct AppConfig {
     pub auth_key: Option<String>,
     pub bridge_ipaddr: Option<IpAddr>,
-}
-
-impl ::std::default::Default for AppConfig {
-    fn default() -> Self {
-        Self {
-            auth_key: None,
-            bridge_ipaddr: None,
-        }
-    }
 }
 
 /// Get the user configuration data

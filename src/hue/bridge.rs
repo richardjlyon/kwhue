@@ -1,30 +1,66 @@
+//! A Hue bridge
+
+use super::lights::LightState;
 use crate::config::*;
 use crate::error::AppError;
 use colored::Colorize;
 use futures_util::{pin_mut, stream::StreamExt};
 use mdns::{Record, RecordKind};
 use reqwest::StatusCode;
-use serde::{de::DeserializeOwned, Deserialize};
-use std::{net::IpAddr, time::Duration};
+use serde::{de::DeserializeOwned, Deserialize, Serialize};
+use std::io::Write;
+use std::{collections::HashMap, net::IpAddr, time::Duration};
 use tokio::time::timeout;
-use tracing::{info, trace};
+use tracing::info;
 
-use super::lights::LightState;
-
-/// A Hue Bridge client providing API commands
+/// Represents a response from the bridge
 ///
-#[derive(Debug)]
-pub struct Bridge {
-    pub ip_address: IpAddr,
-    // pub auth_key: String,
-    //     pub config_info: ConfigInfo,
-    //     pub client: reqwest::Client,
+/// json example
+///
+/// { "error": {} } // Error<T>
+/// { "success": {} } // Success<T>
+#[derive(Deserialize, Debug)]
+#[serde(untagged)]
+enum Response<T, E> {
+    Error(Error<E>),
+    Success(Success<T>),
+}
+
+#[derive(Deserialize, Debug)]
+struct Error<T> {
+    error: T,
+}
+
+#[derive(Deserialize, Debug)]
+struct Success<T> {
+    success: T,
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+pub struct AuthKeyResponse {
+    pub username: String,
+}
+
+#[derive(Deserialize, Debug)]
+struct BasicError {
+    #[serde(rename = "type")]
+    error_type: u32,
+    description: String,
 }
 
 #[derive(Debug)]
 pub enum BridgeStatus {
     CONNECTED,
     DISCONNECTED,
+}
+/// A Hue Bridge client providing API commands
+///
+#[derive(Debug)]
+pub struct Bridge {
+    pub ip_address: IpAddr,
+    pub auth_key: String,
+    //     pub config_info: ConfigInfo,
+    //     pub client: reqwest::Client,
 }
 
 /// Hue configuration information
@@ -34,33 +70,53 @@ pub enum BridgeStatus {
 ///
 impl Bridge {
     pub async fn new() -> Self {
-        let cfg = get_app_cfg();
-
-        // IP address
-        if cfg.bridge_ipaddr.is_none() {
-            println!("{}: {}", "warning".yellow(), "app not initialised");
-            // crate::cli::commands::admin::init().await;
+        if !is_configured() {
+            match configure().await {
+                Ok(_) => {}
+                Err(err) => {
+                    println!("{}: {}\n", "error".red().bold(), err.to_string().bold());
+                    std::process::exit(1);
+                }
+            }
         }
 
         let cfg = get_app_cfg();
         let ip_address = cfg.bridge_ipaddr.unwrap();
-
-        // Auth key
-
-        // let config_info = config_info(&ip_address).await.unwrap();
-        // let client = reqwest::Client::builder()
-        //     .timeout(Duration::new(5, 0))
-        //     .build()
-        //     .unwrap();
+        let auth_key = cfg.auth_key.unwrap();
 
         Self {
             ip_address,
-            // config_info,
-            // client,
+            auth_key,
         }
     }
+}
 
-    // pub async fn status() -> BridgeStatus {}
+/// Return true if config file contains an ip address and auth key
+///
+fn is_configured() -> bool {
+    let cfg = get_app_cfg();
+    cfg.bridge_ipaddr.is_some() && cfg.auth_key.is_some()
+}
+
+async fn configure() -> Result<(), AppError> {
+    let mut cfg = get_app_cfg();
+
+    let ipaddr = match get_bridge_ipaddr().await {
+        Ok(ipaddr) => ipaddr,
+        Err(err) => return Err(err),
+    };
+
+    let auth_key = match create_new_auth_key(ipaddr).await {
+        Ok(auth_key) => auth_key,
+        Err(err) => return Err(err),
+    };
+
+    cfg.bridge_ipaddr = Some(ipaddr);
+    cfg.auth_key = Some(auth_key);
+
+    store_app_cfg(&cfg);
+
+    Ok(())
 }
 
 /// Get an endpoint
@@ -160,4 +216,47 @@ fn to_ip_addr(record: &Record) -> Option<IpAddr> {
         RecordKind::AAAA(addr) => Some(addr.into()),
         _ => None,
     }
+}
+/// Create a hub authorisation key.
+///
+/// See [Hue Configuration API](https://developers.meethue.com/develop/hue-api/7-configuration-api/)
+pub async fn create_new_auth_key(ip_addr: IpAddr) -> Result<String, AppError> {
+    let url = format!("http://{}/api", ip_addr);
+    let client = reqwest::Client::new();
+
+    let mut params = HashMap::new();
+    params.insert("devicetype", "kwhue_app rust_app");
+
+    print!("Press link button");
+    std::io::stdout().flush().unwrap();
+
+    let response = loop {
+        let resp = client.post(&url).json(&params).send().await.unwrap();
+        let status = resp.status();
+
+        let mut data: Vec<Response<AuthKeyResponse, BasicError>> = match status {
+            StatusCode::OK => resp.json().await.map_err(|err| {
+                println!("error: {}", err);
+                AppError::HueBridgeAuthKeyInvalid
+            }),
+            StatusCode::NOT_FOUND => Err(AppError::APINotFound),
+            _ => Err(AppError::Other),
+        }
+        .unwrap();
+
+        // the hub returns an error until the link button is pressed
+        match data.pop().unwrap() {
+            Response::Error(e) => {
+                if e.error.error_type != 101 {
+                    println!("Error: {}", e.error.description);
+                }
+                tokio::time::sleep(Duration::from_secs(1)).await;
+                print!(".");
+                std::io::stdout().flush().unwrap();
+            }
+            Response::Success(s) => break s.success,
+        }
+    };
+
+    Ok(response.username)
 }

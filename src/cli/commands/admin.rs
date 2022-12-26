@@ -5,14 +5,14 @@
 //!
 use crate::hue::config_info::config_info;
 use crate::{
-    config::{get_app_cfg, get_cfg_file_path, store_app_cfg, AppConfig},
+    config::{get_app_cfg, store_app_cfg, AppConfig},
     error::AppError,
     hue::bridge::{get_bridge_ipaddr, Bridge},
 };
 use colored::Colorize;
 use std::io::Write;
 use std::time::Duration;
-use tokio::time::{error::Elapsed, timeout};
+use tokio::time::timeout;
 
 /// Initialise the app
 ///
@@ -143,9 +143,4 @@ pub async fn check(bridge: &Bridge) {
     // println!("Config file       : {}", config_filepath);
 
     // TODO save cfg file
-}
-
-///
-pub async fn create_new_auth_key(bridge: &Bridge) {
-    let mut auth_key = String::new();
 }

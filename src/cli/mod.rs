@@ -1,12 +1,12 @@
-//! A command line interface for kwhue
+//! A command line interface for `kwhue`.
 //!
 //! Commands
 //! --------
-//! user add
-//! light list
-//! light on [id]
-//! light off [id]
-//! light toggle [id]
+//! - user add
+//! - light list
+//! - light on [id]
+//! - light off [id]
+//! - light toggle [id]
 
 pub mod commands;
 
