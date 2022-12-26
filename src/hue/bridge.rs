@@ -9,8 +9,6 @@ use std::{net::IpAddr, time::Duration};
 use tokio::time::timeout;
 use tracing::{info, trace};
 
-use simple_mdns::async_discovery::OneShotMdnsResolver;
-
 use super::lights::LightState;
 
 /// A Hue Bridge client providing API commands
@@ -18,18 +16,19 @@ use super::lights::LightState;
 #[derive(Debug)]
 pub struct Bridge {
     pub ip_address: IpAddr,
-    pub auth_key: String,
+    // pub auth_key: String,
     //     pub config_info: ConfigInfo,
     //     pub client: reqwest::Client,
 }
 
+#[derive(Debug)]
+pub enum BridgeStatus {
+    CONNECTED,
+    DISCONNECTED,
+}
+
 /// Hue configuration information
 ///
-#[derive(Deserialize, Debug)]
-pub struct ConfigInfo {
-    #[serde(rename = "bridgeid")]
-    pub bridge_id: String,
-}
 
 /// Create a new Hue bridge instance
 ///
@@ -37,13 +36,16 @@ impl Bridge {
     pub async fn new() -> Self {
         let cfg = get_app_cfg();
 
+        // IP address
         if cfg.bridge_ipaddr.is_none() {
             println!("{}: {}", "warning".yellow(), "app not initialised");
-            crate::cli::commands::admin::init().await;
+            // crate::cli::commands::admin::init().await;
         }
 
         let cfg = get_app_cfg();
         let ip_address = cfg.bridge_ipaddr.unwrap();
+
+        // Auth key
 
         // let config_info = config_info(&ip_address).await.unwrap();
         // let client = reqwest::Client::builder()
@@ -57,6 +59,8 @@ impl Bridge {
             // client,
         }
     }
+
+    // pub async fn status() -> BridgeStatus {}
 }
 
 /// Get an endpoint
@@ -155,36 +159,5 @@ fn to_ip_addr(record: &Record) -> Option<IpAddr> {
         RecordKind::A(addr) => Some(addr.into()),
         RecordKind::AAAA(addr) => Some(addr.into()),
         _ => None,
-    }
-}
-
-/// Reads the Hue bridge configuration info
-///
-pub async fn config_info(ip_address: &IpAddr) -> Result<ConfigInfo, AppError> {
-    let client = reqwest::Client::builder().build().unwrap();
-    let url = format!("http://{}/api/0/config", ip_address);
-    let resp = client
-        .get(url)
-        .timeout(std::time::Duration::from_millis(5000))
-        .send()
-        .await;
-
-    // intercept timeout due to bad ip address
-    let resp = match resp {
-        Ok(resp) => resp,
-        Err(err) => {
-            if err.is_timeout() {
-                return Err(AppError::HueBridgeTimeout);
-            } else {
-                return Err(AppError::Other);
-            }
-        }
-    };
-
-    // intercept misconfiguration and return configuration info
-    let text = resp.text().await.expect("couldn't get text");
-    match serde_json::from_str(&text) {
-        Ok(config_info) => Ok(config_info),
-        Err(_) => Err(AppError::HueBridgeMisconfigured),
     }
 }

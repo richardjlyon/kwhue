@@ -3,10 +3,11 @@
 //! > admin init
 //! > admin check
 //!
+use crate::hue::config_info::config_info;
 use crate::{
     config::{get_app_cfg, get_cfg_file_path, store_app_cfg, AppConfig},
     error::AppError,
-    hue::bridge::{config_info, get_bridge_ipaddr, get_bridge_ipaddr_alt, Bridge},
+    hue::bridge::{get_bridge_ipaddr, Bridge},
 };
 use colored::Colorize;
 use std::io::Write;

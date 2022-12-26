@@ -16,3 +16,12 @@ Active
 Backlog
 -------
 2. Command to turn blue shade light on and off
+
+Hub management
+--------------
+
+is_configured() - configuration file has an ip address and auth token
+is_connected() - returns config info
+
+get_ip_address() - get the IP address of the hub
+get_auth_token() - get an auth token for the hub
