@@ -89,37 +89,7 @@ impl Bridge {
             auth_key,
         }
     }
-}
 
-/// Return true if config file contains an ip address and auth key.
-fn is_configured() -> bool {
-    let cfg = get_app_cfg();
-    cfg.bridge_ipaddr.is_some() && cfg.auth_key.is_some()
-}
-
-/// Gets the IP address, creates an auth_key, and saves both to the config file.
-async fn configure() -> Result<(), AppError> {
-    let mut cfg = get_app_cfg();
-
-    let ipaddr = match get_bridge_ipaddr().await {
-        Ok(ipaddr) => ipaddr,
-        Err(err) => return Err(err),
-    };
-
-    let auth_key = match create_new_auth_key(ipaddr).await {
-        Ok(auth_key) => auth_key,
-        Err(err) => return Err(err),
-    };
-
-    cfg.bridge_ipaddr = Some(ipaddr);
-    cfg.auth_key = Some(auth_key);
-
-    store_app_cfg(&cfg);
-
-    Ok(())
-}
-
-impl Bridge {
     /// Gets an endpoint response and deserialises it.
     #[tracing::instrument(skip(self))]
     pub async fn get<T: DeserializeOwned>(&self, endpoint: &str) -> Result<T, AppError> {
@@ -180,8 +150,33 @@ impl Bridge {
     }
 }
 
-// pub async fn is_connected() -> Result<BridgeStatus, AppError> {}
+/// Return true if config file contains an ip address and auth key.
+fn is_configured() -> bool {
+    let cfg = get_app_cfg();
+    cfg.bridge_ipaddr.is_some() && cfg.auth_key.is_some()
+}
 
+/// Gets the IP address, creates an auth_key, and saves both to the config file.
+async fn configure() -> Result<(), AppError> {
+    let mut cfg = get_app_cfg();
+
+    let ipaddr = match get_bridge_ipaddr().await {
+        Ok(ipaddr) => ipaddr,
+        Err(err) => return Err(err),
+    };
+
+    let auth_key = match create_new_auth_key(ipaddr).await {
+        Ok(auth_key) => auth_key,
+        Err(err) => return Err(err),
+    };
+
+    cfg.bridge_ipaddr = Some(ipaddr);
+    cfg.auth_key = Some(auth_key);
+
+    store_app_cfg(&cfg);
+
+    Ok(())
+}
 /// Gets the Hue Bridge ip address.
 pub async fn get_bridge_ipaddr() -> Result<IpAddr, AppError> {
     const SERVICE_NAME: &str = "_hue._tcp.local";

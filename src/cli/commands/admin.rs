@@ -12,11 +12,9 @@ use crate::{
 use colored::Colorize;
 use std::io::Write;
 
-/// Reset the app
+/// Reset the app.
 ///
-/// Gets the Hue bridge ip address, checks it is configured properly, obtains
-/// an authorisation key, and stores the results in the configuration file.
-///   
+/// Clearing the config file forces it to reinitialise next time it starts up.
 pub async fn reset() {
     // reset config file
     let cfg = AppConfig::default();
