@@ -11,6 +11,11 @@ pub struct AppConfig {
     pub bridge_ipaddr: Option<IpAddr>,
 }
 
+// null null
+// null val
+// val null xxxx
+// val val  <----
+
 /// Get the user configuration data
 pub fn get_app_cfg() -> AppConfig {
     confy::load(CONFIG_NAME, None).unwrap()

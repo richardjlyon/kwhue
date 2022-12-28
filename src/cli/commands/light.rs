@@ -8,14 +8,14 @@ use itertools::Itertools;
 pub async fn all(bridge: &Bridge) {
     tracing::debug!("listing all lights");
     let lights = bridge.get_lights().await.unwrap();
-    // ALEXANDER Sort every time, or on the structure some how?
+
     for light_id in lights.keys().sorted() {
         let name = lights[light_id].name.clone();
-        let state = match lights[light_id].state.on {
+        let state = match lights[light_id].state.on.unwrap() {
             true => "ON".bright_yellow(),
             false => "OFF".bright_blue(),
         };
-        let reachable = match lights[light_id].state.reachable {
+        let reachable = match lights[light_id].state.reachable.unwrap() {
             true => "OK".green(),
             false => "UNREACHABLE".red(),
         };
@@ -28,8 +28,10 @@ pub async fn all(bridge: &Bridge) {
 ///
 pub async fn on(bridge: &Bridge, id: &u32) {
     let current_state = bridge.get_state_for_light(id).await.unwrap();
+    println!("{:#?}", current_state);
+
     let new_state = LightState {
-        on: true,
+        on: Some(true),
         ..current_state
     };
     let endpoint = format!("lights/{}/state", id);
@@ -41,7 +43,7 @@ pub async fn on(bridge: &Bridge, id: &u32) {
 pub async fn off(bridge: &Bridge, id: &u32) {
     let current_state = bridge.get_state_for_light(id).await.unwrap();
     let new_state = LightState {
-        on: false,
+        on: Some(false),
         ..current_state
     };
     let endpoint = format!("lights/{}/state", id);
@@ -53,7 +55,7 @@ pub async fn off(bridge: &Bridge, id: &u32) {
 pub async fn toggle(bridge: &Bridge, id: &u32) {
     let current_state = bridge.get_state_for_light(id).await.unwrap();
     let new_state = LightState {
-        on: !current_state.on,
+        on: Some(!current_state.on.unwrap()),
         ..current_state
     };
     let endpoint = format!("lights/{}/state", id);

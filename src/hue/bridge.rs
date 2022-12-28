@@ -97,7 +97,10 @@ impl Bridge {
             }
         }
 
-        let cfg = get_app_cfg();
+        Self::new_with_config(get_app_cfg())
+    }
+
+    pub fn new_with_config(cfg: AppConfig) -> Self {
         let ip_address = cfg.bridge_ipaddr.unwrap();
         let auth_key = cfg.auth_key.unwrap();
 
@@ -289,5 +292,32 @@ fn to_ip_addr(record: &Record) -> Option<IpAddr> {
         RecordKind::A(addr) => Some(addr.into()),
         RecordKind::AAAA(addr) => Some(addr.into()),
         _ => None,
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[tokio::test]
+    async fn finds_mdns() {
+        let mock = httpmock::MockServer::start_async().await;
+        let get_lights = mock
+            .mock_async(|when, then| {
+                when.method("GET").path("/api/lights");
+                then.status(200)
+                    .header("content-type", "application/json")
+                    .body(r#"{"lights": {}}"#);
+            })
+            .await;
+
+        let bridge = Bridge::new_with_config(AppConfig {
+            auth_key: None,
+            bridge_ipaddr: Some(mock.address().ip()),
+        });
+
+        let lights = bridge.get_lights().await.unwrap();
+
+        get_lights.assert_hits_async(1).await;
     }
 }
