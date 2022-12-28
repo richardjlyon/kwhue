@@ -4,7 +4,7 @@ use itertools::Itertools;
 
 /// COMMAND: List all lights
 ///
-#[tracing::instrument(fields(ip = %bridge.ip_address), skip(bridge))]
+#[tracing::instrument(skip(bridge))]
 pub async fn all(bridge: &Bridge) {
     tracing::debug!("listing all lights");
     let lights = bridge.get_lights().await.unwrap();

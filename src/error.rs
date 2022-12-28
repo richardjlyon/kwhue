@@ -1,7 +1,7 @@
 #[derive(Debug, thiserror::Error)]
 pub enum AppError {
     #[error("network error")]
-    NetworkError,
+    NetworkError(#[from] reqwest::Error),
 
     #[error("Hue bridge not found")]
     HueBridgeNotFoundError,
@@ -20,6 +20,9 @@ pub enum AppError {
 
     #[error("API not found")]
     APINotFound,
+
+    #[error("couldn't deserialize")]
+    DeserializeError(#[from] serde_json::Error),
 
     #[error("other error")]
     Other,

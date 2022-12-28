@@ -1,20 +1,47 @@
 /// Handles app configuration
 ///
 use serde::{Deserialize, Serialize};
-use std::net::IpAddr;
+use std::net::SocketAddr;
 
 const CONFIG_NAME: &str = "kwhue";
 
-#[derive(Serialize, Deserialize, Default)]
-pub struct AppConfig {
-    pub auth_key: Option<String>,
-    pub bridge_ipaddr: Option<IpAddr>,
+// #[derive(Serialize, Deserialize, Default)]
+// pub struct AppConfig {
+//     pub auth_key: Option<String>,
+//     pub bridge_ipaddr: Option<IpAddr>,
+// }
+
+// NO IP, KEY <-- NO!
+
+#[derive(Serialize, Deserialize, Debug)]
+#[serde(tag = "type")]
+pub enum AppConfig {
+    Uninit,
+    Unauth { ip: SocketAddr },
+    Auth(AuthAppConfig),
 }
 
-// null null
-// null val
-// val null xxxx
-// val val  <----
+#[derive(Serialize, Deserialize, Debug, Clone)]
+pub struct AuthAppConfig {
+    pub ip: SocketAddr,
+    pub key: String,
+}
+
+impl Default for AppConfig {
+    fn default() -> Self {
+        AppConfig::Uninit
+    }
+}
+
+impl AppConfig {
+    pub fn is_configured(&self) -> bool {
+        match self {
+            AppConfig::Uninit => false,
+            AppConfig::Unauth { .. } => false,
+            AppConfig::Auth { .. } => true,
+        }
+    }
+}
 
 /// Get the user configuration data
 pub fn get_app_cfg() -> AppConfig {

@@ -141,7 +141,7 @@ pub mod cli {
                                 Some(7u32),
                                 Some("kwhue::cli::commands::light"),
                                 ::tracing_core::field::FieldSet::new(
-                                    &["ip"],
+                                    &[],
                                     ::tracing_core::callsite::Identifier(&CALLSITE),
                                 ),
                                 ::tracing::metadata::Kind::SPAN,
@@ -159,18 +159,29 @@ pub mod cli {
                         && ::tracing::__macro_support::__is_enabled(CALLSITE.metadata(), interest)
                     {
                         let meta = CALLSITE.metadata();
-                        ::tracing::Span::new(meta, &{
-                            #[allow(unused_imports)]
-                            use ::tracing::field::{debug, display, Value};
-                            let mut iter = meta.fields().iter();
-                            meta.fields().value_set(&[(
-                                &iter.next().expect("FieldSet corrupted (this is a bug)"),
-                                Some(&display(&bridge.ip_address) as &dyn Value),
-                            )])
-                        })
+                        ::tracing::Span::new(meta, &{ meta.fields().value_set(&[]) })
                     } else {
                         let span = ::tracing::__macro_support::__disabled_span(CALLSITE.metadata());
-                        {};
+                        if match tracing::Level::INFO {
+                            ::tracing::Level::ERROR => ::tracing::log::Level::Error,
+                            ::tracing::Level::WARN => ::tracing::log::Level::Warn,
+                            ::tracing::Level::INFO => ::tracing::log::Level::Info,
+                            ::tracing::Level::DEBUG => ::tracing::log::Level::Debug,
+                            _ => ::tracing::log::Level::Trace,
+                        } <= ::tracing::log::STATIC_MAX_LEVEL
+                        {
+                            if !::tracing::dispatcher::has_been_set() {
+                                {
+                                    span.record_all(&{
+                                        CALLSITE.metadata().fields().value_set(&[])
+                                    });
+                                }
+                            } else {
+                                {}
+                            }
+                        } else {
+                            {}
+                        };
                         span
                     }
                 };
@@ -221,6 +232,52 @@ pub mod cli {
                                 (|value_set: ::tracing::field::ValueSet| {
                                     let meta = CALLSITE.metadata();
                                     ::tracing::Event::dispatch(meta, &value_set);
+                                    if match ::tracing::Level::DEBUG {
+                                        ::tracing::Level::ERROR => ::tracing::log::Level::Error,
+                                        ::tracing::Level::WARN => ::tracing::log::Level::Warn,
+                                        ::tracing::Level::INFO => ::tracing::log::Level::Info,
+                                        ::tracing::Level::DEBUG => ::tracing::log::Level::Debug,
+                                        _ => ::tracing::log::Level::Trace,
+                                    } <= ::tracing::log::STATIC_MAX_LEVEL
+                                    {
+                                        if !::tracing::dispatcher::has_been_set() {
+                                            {
+                                                use ::tracing::log;
+                                                let level = match ::tracing::Level::DEBUG {
+                                                    ::tracing::Level::ERROR => {
+                                                        ::tracing::log::Level::Error
+                                                    }
+                                                    ::tracing::Level::WARN => {
+                                                        ::tracing::log::Level::Warn
+                                                    }
+                                                    ::tracing::Level::INFO => {
+                                                        ::tracing::log::Level::Info
+                                                    }
+                                                    ::tracing::Level::DEBUG => {
+                                                        ::tracing::log::Level::Debug
+                                                    }
+                                                    _ => ::tracing::log::Level::Trace,
+                                                };
+                                                if level <= log::max_level() {
+                                                    let meta = CALLSITE.metadata();
+                                                    let log_meta = log::Metadata::builder()
+                                                        .level(level)
+                                                        .target(meta.target())
+                                                        .build();
+                                                    let logger = log::logger();
+                                                    if logger.enabled(&log_meta) {
+                                                        ::tracing::__macro_support::__tracing_log(
+                                                            meta, logger, log_meta, &value_set,
+                                                        )
+                                                    }
+                                                }
+                                            }
+                                        } else {
+                                            {}
+                                        }
+                                    } else {
+                                        {}
+                                    };
                                 })({
                                     #[allow(unused_imports)]
                                     use ::tracing::field::{debug, display, Value};
@@ -235,6 +292,63 @@ pub mod cli {
                                     )])
                                 });
                             } else {
+                                if match ::tracing::Level::DEBUG {
+                                    ::tracing::Level::ERROR => ::tracing::log::Level::Error,
+                                    ::tracing::Level::WARN => ::tracing::log::Level::Warn,
+                                    ::tracing::Level::INFO => ::tracing::log::Level::Info,
+                                    ::tracing::Level::DEBUG => ::tracing::log::Level::Debug,
+                                    _ => ::tracing::log::Level::Trace,
+                                } <= ::tracing::log::STATIC_MAX_LEVEL
+                                {
+                                    if !::tracing::dispatcher::has_been_set() {
+                                        {
+                                            use ::tracing::log;
+                                            let level = match ::tracing::Level::DEBUG {
+                                                ::tracing::Level::ERROR => {
+                                                    ::tracing::log::Level::Error
+                                                }
+                                                ::tracing::Level::WARN => {
+                                                    ::tracing::log::Level::Warn
+                                                }
+                                                ::tracing::Level::INFO => {
+                                                    ::tracing::log::Level::Info
+                                                }
+                                                ::tracing::Level::DEBUG => {
+                                                    ::tracing::log::Level::Debug
+                                                }
+                                                _ => ::tracing::log::Level::Trace,
+                                            };
+                                            if level <= log::max_level() {
+                                                let meta = CALLSITE.metadata();
+                                                let log_meta = log::Metadata::builder()
+                                                    .level(level)
+                                                    .target(meta.target())
+                                                    .build();
+                                                let logger = log::logger();
+                                                if logger.enabled(&log_meta) {
+                                                    ::tracing::__macro_support::__tracing_log(
+                                                        meta,
+                                                        logger,
+                                                        log_meta,
+                                                        &{
+                                                            #[allow(unused_imports)]
+                                                            use ::tracing::field::{
+                                                                debug, display, Value,
+                                                            };
+                                                            let mut iter =
+                                                                CALLSITE.metadata().fields().iter();
+                                                            CALLSITE . metadata () . fields () . value_set (& [(& iter . next () . expect ("FieldSet corrupted (this is a bug)") , Some (& :: core :: fmt :: Arguments :: new_v1 (& ["listing all lights"] , & []) as & dyn Value))])
+                                                        },
+                                                    )
+                                                }
+                                            }
+                                        }
+                                    } else {
+                                        {}
+                                    }
+                                } else {
+                                    {}
+                                };
                             }
                         };
                         let lights = bridge.get_lights().await.unwrap();
@@ -1287,9 +1401,10 @@ pub mod config {
     use serde::{Deserialize, Serialize};
     use std::net::IpAddr;
     const CONFIG_NAME: &str = "kwhue";
-    pub struct AppConfig {
-        pub auth_key: Option<String>,
-        pub bridge_ipaddr: Option<IpAddr>,
+    pub enum AppConfig {
+        Uninit,
+        Unauth { ip: IpAddr },
+        Auth(AuthAppConfig),
     }
     #[doc(hidden)]
     #[allow(non_upper_case_globals, unused_attributes, unused_qualifications)]
@@ -1305,9 +1420,419 @@ pub mod config {
             where
                 __S: _serde::Serializer,
             {
+                match *self {
+                    AppConfig::Uninit => _serde::Serializer::serialize_unit_variant(
+                        __serializer,
+                        "AppConfig",
+                        0u32,
+                        "Uninit",
+                    ),
+                    AppConfig::Unauth { ref ip } => {
+                        let mut __serde_state = match _serde::Serializer::serialize_struct_variant(
+                            __serializer,
+                            "AppConfig",
+                            1u32,
+                            "Unauth",
+                            0 + 1,
+                        ) {
+                            _serde::__private::Ok(__val) => __val,
+                            _serde::__private::Err(__err) => {
+                                return _serde::__private::Err(__err);
+                            }
+                        };
+                        match _serde::ser::SerializeStructVariant::serialize_field(
+                            &mut __serde_state,
+                            "ip",
+                            ip,
+                        ) {
+                            _serde::__private::Ok(__val) => __val,
+                            _serde::__private::Err(__err) => {
+                                return _serde::__private::Err(__err);
+                            }
+                        };
+                        _serde::ser::SerializeStructVariant::end(__serde_state)
+                    }
+                    AppConfig::Auth(ref __field0) => _serde::Serializer::serialize_newtype_variant(
+                        __serializer,
+                        "AppConfig",
+                        2u32,
+                        "Auth",
+                        __field0,
+                    ),
+                }
+            }
+        }
+    };
+    #[doc(hidden)]
+    #[allow(non_upper_case_globals, unused_attributes, unused_qualifications)]
+    const _: () = {
+        #[allow(unused_extern_crates, clippy::useless_attribute)]
+        extern crate serde as _serde;
+        #[automatically_derived]
+        impl<'de> _serde::Deserialize<'de> for AppConfig {
+            fn deserialize<__D>(__deserializer: __D) -> _serde::__private::Result<Self, __D::Error>
+            where
+                __D: _serde::Deserializer<'de>,
+            {
+                #[allow(non_camel_case_types)]
+                enum __Field {
+                    __field0,
+                    __field1,
+                    __field2,
+                }
+                struct __FieldVisitor;
+                impl<'de> _serde::de::Visitor<'de> for __FieldVisitor {
+                    type Value = __Field;
+                    fn expecting(
+                        &self,
+                        __formatter: &mut _serde::__private::Formatter,
+                    ) -> _serde::__private::fmt::Result {
+                        _serde::__private::Formatter::write_str(__formatter, "variant identifier")
+                    }
+                    fn visit_u64<__E>(
+                        self,
+                        __value: u64,
+                    ) -> _serde::__private::Result<Self::Value, __E>
+                    where
+                        __E: _serde::de::Error,
+                    {
+                        match __value {
+                            0u64 => _serde::__private::Ok(__Field::__field0),
+                            1u64 => _serde::__private::Ok(__Field::__field1),
+                            2u64 => _serde::__private::Ok(__Field::__field2),
+                            _ => _serde::__private::Err(_serde::de::Error::invalid_value(
+                                _serde::de::Unexpected::Unsigned(__value),
+                                &"variant index 0 <= i < 3",
+                            )),
+                        }
+                    }
+                    fn visit_str<__E>(
+                        self,
+                        __value: &str,
+                    ) -> _serde::__private::Result<Self::Value, __E>
+                    where
+                        __E: _serde::de::Error,
+                    {
+                        match __value {
+                            "Uninit" => _serde::__private::Ok(__Field::__field0),
+                            "Unauth" => _serde::__private::Ok(__Field::__field1),
+                            "Auth" => _serde::__private::Ok(__Field::__field2),
+                            _ => _serde::__private::Err(_serde::de::Error::unknown_variant(
+                                __value, VARIANTS,
+                            )),
+                        }
+                    }
+                    fn visit_bytes<__E>(
+                        self,
+                        __value: &[u8],
+                    ) -> _serde::__private::Result<Self::Value, __E>
+                    where
+                        __E: _serde::de::Error,
+                    {
+                        match __value {
+                            b"Uninit" => _serde::__private::Ok(__Field::__field0),
+                            b"Unauth" => _serde::__private::Ok(__Field::__field1),
+                            b"Auth" => _serde::__private::Ok(__Field::__field2),
+                            _ => {
+                                let __value = &_serde::__private::from_utf8_lossy(__value);
+                                _serde::__private::Err(_serde::de::Error::unknown_variant(
+                                    __value, VARIANTS,
+                                ))
+                            }
+                        }
+                    }
+                }
+                impl<'de> _serde::Deserialize<'de> for __Field {
+                    #[inline]
+                    fn deserialize<__D>(
+                        __deserializer: __D,
+                    ) -> _serde::__private::Result<Self, __D::Error>
+                    where
+                        __D: _serde::Deserializer<'de>,
+                    {
+                        _serde::Deserializer::deserialize_identifier(__deserializer, __FieldVisitor)
+                    }
+                }
+                struct __Visitor<'de> {
+                    marker: _serde::__private::PhantomData<AppConfig>,
+                    lifetime: _serde::__private::PhantomData<&'de ()>,
+                }
+                impl<'de> _serde::de::Visitor<'de> for __Visitor<'de> {
+                    type Value = AppConfig;
+                    fn expecting(
+                        &self,
+                        __formatter: &mut _serde::__private::Formatter,
+                    ) -> _serde::__private::fmt::Result {
+                        _serde::__private::Formatter::write_str(__formatter, "enum AppConfig")
+                    }
+                    fn visit_enum<__A>(
+                        self,
+                        __data: __A,
+                    ) -> _serde::__private::Result<Self::Value, __A::Error>
+                    where
+                        __A: _serde::de::EnumAccess<'de>,
+                    {
+                        match match _serde::de::EnumAccess::variant(__data) {
+                            _serde::__private::Ok(__val) => __val,
+                            _serde::__private::Err(__err) => {
+                                return _serde::__private::Err(__err);
+                            }
+                        } {
+                            (__Field::__field0, __variant) => {
+                                match _serde::de::VariantAccess::unit_variant(__variant) {
+                                    _serde::__private::Ok(__val) => __val,
+                                    _serde::__private::Err(__err) => {
+                                        return _serde::__private::Err(__err);
+                                    }
+                                };
+                                _serde::__private::Ok(AppConfig::Uninit)
+                            }
+                            (__Field::__field1, __variant) => {
+                                #[allow(non_camel_case_types)]
+                                enum __Field {
+                                    __field0,
+                                    __ignore,
+                                }
+                                struct __FieldVisitor;
+                                impl<'de> _serde::de::Visitor<'de> for __FieldVisitor {
+                                    type Value = __Field;
+                                    fn expecting(
+                                        &self,
+                                        __formatter: &mut _serde::__private::Formatter,
+                                    ) -> _serde::__private::fmt::Result
+                                    {
+                                        _serde::__private::Formatter::write_str(
+                                            __formatter,
+                                            "field identifier",
+                                        )
+                                    }
+                                    fn visit_u64<__E>(
+                                        self,
+                                        __value: u64,
+                                    ) -> _serde::__private::Result<Self::Value, __E>
+                                    where
+                                        __E: _serde::de::Error,
+                                    {
+                                        match __value {
+                                            0u64 => _serde::__private::Ok(__Field::__field0),
+                                            _ => _serde::__private::Ok(__Field::__ignore),
+                                        }
+                                    }
+                                    fn visit_str<__E>(
+                                        self,
+                                        __value: &str,
+                                    ) -> _serde::__private::Result<Self::Value, __E>
+                                    where
+                                        __E: _serde::de::Error,
+                                    {
+                                        match __value {
+                                            "ip" => _serde::__private::Ok(__Field::__field0),
+                                            _ => _serde::__private::Ok(__Field::__ignore),
+                                        }
+                                    }
+                                    fn visit_bytes<__E>(
+                                        self,
+                                        __value: &[u8],
+                                    ) -> _serde::__private::Result<Self::Value, __E>
+                                    where
+                                        __E: _serde::de::Error,
+                                    {
+                                        match __value {
+                                            b"ip" => _serde::__private::Ok(__Field::__field0),
+                                            _ => _serde::__private::Ok(__Field::__ignore),
+                                        }
+                                    }
+                                }
+                                impl<'de> _serde::Deserialize<'de> for __Field {
+                                    #[inline]
+                                    fn deserialize<__D>(
+                                        __deserializer: __D,
+                                    ) -> _serde::__private::Result<Self, __D::Error>
+                                    where
+                                        __D: _serde::Deserializer<'de>,
+                                    {
+                                        _serde::Deserializer::deserialize_identifier(
+                                            __deserializer,
+                                            __FieldVisitor,
+                                        )
+                                    }
+                                }
+                                struct __Visitor<'de> {
+                                    marker: _serde::__private::PhantomData<AppConfig>,
+                                    lifetime: _serde::__private::PhantomData<&'de ()>,
+                                }
+                                impl<'de> _serde::de::Visitor<'de> for __Visitor<'de> {
+                                    type Value = AppConfig;
+                                    fn expecting(
+                                        &self,
+                                        __formatter: &mut _serde::__private::Formatter,
+                                    ) -> _serde::__private::fmt::Result
+                                    {
+                                        _serde::__private::Formatter::write_str(
+                                            __formatter,
+                                            "struct variant AppConfig::Unauth",
+                                        )
+                                    }
+                                    #[inline]
+                                    fn visit_seq<__A>(
+                                        self,
+                                        mut __seq: __A,
+                                    ) -> _serde::__private::Result<Self::Value, __A::Error>
+                                    where
+                                        __A: _serde::de::SeqAccess<'de>,
+                                    {
+                                        let __field0 =
+                                            match match _serde::de::SeqAccess::next_element::<IpAddr>(
+                                                &mut __seq,
+                                            ) {
+                                                _serde::__private::Ok(__val) => __val,
+                                                _serde::__private::Err(__err) => {
+                                                    return _serde::__private::Err(__err);
+                                                }
+                                            } {
+                                                _serde::__private::Some(__value) => __value,
+                                                _serde::__private::None => {
+                                                    return _serde :: __private :: Err (_serde :: de :: Error :: invalid_length (0usize , & "struct variant AppConfig::Unauth with 1 element")) ;
+                                                }
+                                            };
+                                        _serde::__private::Ok(AppConfig::Unauth { ip: __field0 })
+                                    }
+                                    #[inline]
+                                    fn visit_map<__A>(
+                                        self,
+                                        mut __map: __A,
+                                    ) -> _serde::__private::Result<Self::Value, __A::Error>
+                                    where
+                                        __A: _serde::de::MapAccess<'de>,
+                                    {
+                                        let mut __field0: _serde::__private::Option<IpAddr> =
+                                            _serde::__private::None;
+                                        while let _serde::__private::Some(__key) =
+                                            match _serde::de::MapAccess::next_key::<__Field>(
+                                                &mut __map,
+                                            ) {
+                                                _serde::__private::Ok(__val) => __val,
+                                                _serde::__private::Err(__err) => {
+                                                    return _serde::__private::Err(__err);
+                                                }
+                                            }
+                                        {
+                                            match __key {
+                                                __Field::__field0 => {
+                                                    if _serde::__private::Option::is_some(&__field0)
+                                                    {
+                                                        return _serde :: __private :: Err (< __A :: Error as _serde :: de :: Error > :: duplicate_field ("ip")) ;
+                                                    }
+                                                    __field0 = _serde::__private::Some(
+                                                        match _serde::de::MapAccess::next_value::<
+                                                            IpAddr,
+                                                        >(
+                                                            &mut __map
+                                                        ) {
+                                                            _serde::__private::Ok(__val) => __val,
+                                                            _serde::__private::Err(__err) => {
+                                                                return _serde::__private::Err(
+                                                                    __err,
+                                                                );
+                                                            }
+                                                        },
+                                                    );
+                                                }
+                                                _ => {
+                                                    let _ = match _serde::de::MapAccess::next_value::<
+                                                        _serde::de::IgnoredAny,
+                                                    >(
+                                                        &mut __map
+                                                    ) {
+                                                        _serde::__private::Ok(__val) => __val,
+                                                        _serde::__private::Err(__err) => {
+                                                            return _serde::__private::Err(__err);
+                                                        }
+                                                    };
+                                                }
+                                            }
+                                        }
+                                        let __field0 = match __field0 {
+                                            _serde::__private::Some(__field0) => __field0,
+                                            _serde::__private::None => {
+                                                match _serde::__private::de::missing_field("ip") {
+                                                    _serde::__private::Ok(__val) => __val,
+                                                    _serde::__private::Err(__err) => {
+                                                        return _serde::__private::Err(__err);
+                                                    }
+                                                }
+                                            }
+                                        };
+                                        _serde::__private::Ok(AppConfig::Unauth { ip: __field0 })
+                                    }
+                                }
+                                const FIELDS: &'static [&'static str] = &["ip"];
+                                _serde::de::VariantAccess::struct_variant(
+                                    __variant,
+                                    FIELDS,
+                                    __Visitor {
+                                        marker: _serde::__private::PhantomData::<AppConfig>,
+                                        lifetime: _serde::__private::PhantomData,
+                                    },
+                                )
+                            }
+                            (__Field::__field2, __variant) => _serde::__private::Result::map(
+                                _serde::de::VariantAccess::newtype_variant::<AuthAppConfig>(
+                                    __variant,
+                                ),
+                                AppConfig::Auth,
+                            ),
+                        }
+                    }
+                }
+                const VARIANTS: &'static [&'static str] = &["Uninit", "Unauth", "Auth"];
+                _serde::Deserializer::deserialize_enum(
+                    __deserializer,
+                    "AppConfig",
+                    VARIANTS,
+                    __Visitor {
+                        marker: _serde::__private::PhantomData::<AppConfig>,
+                        lifetime: _serde::__private::PhantomData,
+                    },
+                )
+            }
+        }
+    };
+    #[automatically_derived]
+    impl ::core::fmt::Debug for AppConfig {
+        fn fmt(&self, f: &mut ::core::fmt::Formatter) -> ::core::fmt::Result {
+            match self {
+                AppConfig::Uninit => ::core::fmt::Formatter::write_str(f, "Uninit"),
+                AppConfig::Unauth { ip: __self_0 } => {
+                    ::core::fmt::Formatter::debug_struct_field1_finish(f, "Unauth", "ip", &__self_0)
+                }
+                AppConfig::Auth(__self_0) => {
+                    ::core::fmt::Formatter::debug_tuple_field1_finish(f, "Auth", &__self_0)
+                }
+            }
+        }
+    }
+    pub struct AuthAppConfig {
+        pub ip: IpAddr,
+        pub key: String,
+    }
+    #[doc(hidden)]
+    #[allow(non_upper_case_globals, unused_attributes, unused_qualifications)]
+    const _: () = {
+        #[allow(unused_extern_crates, clippy::useless_attribute)]
+        extern crate serde as _serde;
+        #[automatically_derived]
+        impl _serde::Serialize for AuthAppConfig {
+            fn serialize<__S>(
+                &self,
+                __serializer: __S,
+            ) -> _serde::__private::Result<__S::Ok, __S::Error>
+            where
+                __S: _serde::Serializer,
+            {
                 let mut __serde_state = match _serde::Serializer::serialize_struct(
                     __serializer,
-                    "AppConfig",
+                    "AuthAppConfig",
                     false as usize + 1 + 1,
                 ) {
                     _serde::__private::Ok(__val) => __val,
@@ -1317,8 +1842,8 @@ pub mod config {
                 };
                 match _serde::ser::SerializeStruct::serialize_field(
                     &mut __serde_state,
-                    "auth_key",
-                    &self.auth_key,
+                    "ip",
+                    &self.ip,
                 ) {
                     _serde::__private::Ok(__val) => __val,
                     _serde::__private::Err(__err) => {
@@ -1327,8 +1852,8 @@ pub mod config {
                 };
                 match _serde::ser::SerializeStruct::serialize_field(
                     &mut __serde_state,
-                    "bridge_ipaddr",
-                    &self.bridge_ipaddr,
+                    "key",
+                    &self.key,
                 ) {
                     _serde::__private::Ok(__val) => __val,
                     _serde::__private::Err(__err) => {
@@ -1345,7 +1870,7 @@ pub mod config {
         #[allow(unused_extern_crates, clippy::useless_attribute)]
         extern crate serde as _serde;
         #[automatically_derived]
-        impl<'de> _serde::Deserialize<'de> for AppConfig {
+        impl<'de> _serde::Deserialize<'de> for AuthAppConfig {
             fn deserialize<__D>(__deserializer: __D) -> _serde::__private::Result<Self, __D::Error>
             where
                 __D: _serde::Deserializer<'de>,
@@ -1386,8 +1911,8 @@ pub mod config {
                         __E: _serde::de::Error,
                     {
                         match __value {
-                            "auth_key" => _serde::__private::Ok(__Field::__field0),
-                            "bridge_ipaddr" => _serde::__private::Ok(__Field::__field1),
+                            "ip" => _serde::__private::Ok(__Field::__field0),
+                            "key" => _serde::__private::Ok(__Field::__field1),
                             _ => _serde::__private::Ok(__Field::__ignore),
                         }
                     }
@@ -1399,8 +1924,8 @@ pub mod config {
                         __E: _serde::de::Error,
                     {
                         match __value {
-                            b"auth_key" => _serde::__private::Ok(__Field::__field0),
-                            b"bridge_ipaddr" => _serde::__private::Ok(__Field::__field1),
+                            b"ip" => _serde::__private::Ok(__Field::__field0),
+                            b"key" => _serde::__private::Ok(__Field::__field1),
                             _ => _serde::__private::Ok(__Field::__ignore),
                         }
                     }
@@ -1417,16 +1942,16 @@ pub mod config {
                     }
                 }
                 struct __Visitor<'de> {
-                    marker: _serde::__private::PhantomData<AppConfig>,
+                    marker: _serde::__private::PhantomData<AuthAppConfig>,
                     lifetime: _serde::__private::PhantomData<&'de ()>,
                 }
                 impl<'de> _serde::de::Visitor<'de> for __Visitor<'de> {
-                    type Value = AppConfig;
+                    type Value = AuthAppConfig;
                     fn expecting(
                         &self,
                         __formatter: &mut _serde::__private::Formatter,
                     ) -> _serde::__private::fmt::Result {
-                        _serde::__private::Formatter::write_str(__formatter, "struct AppConfig")
+                        _serde::__private::Formatter::write_str(__formatter, "struct AuthAppConfig")
                     }
                     #[inline]
                     fn visit_seq<__A>(
@@ -1436,43 +1961,43 @@ pub mod config {
                     where
                         __A: _serde::de::SeqAccess<'de>,
                     {
-                        let __field0 = match match _serde::de::SeqAccess::next_element::<
-                            Option<String>,
-                        >(&mut __seq)
-                        {
-                            _serde::__private::Ok(__val) => __val,
-                            _serde::__private::Err(__err) => {
-                                return _serde::__private::Err(__err);
-                            }
-                        } {
-                            _serde::__private::Some(__value) => __value,
-                            _serde::__private::None => {
-                                return _serde::__private::Err(_serde::de::Error::invalid_length(
-                                    0usize,
-                                    &"struct AppConfig with 2 elements",
-                                ));
-                            }
-                        };
-                        let __field1 = match match _serde::de::SeqAccess::next_element::<
-                            Option<IpAddr>,
-                        >(&mut __seq)
-                        {
-                            _serde::__private::Ok(__val) => __val,
-                            _serde::__private::Err(__err) => {
-                                return _serde::__private::Err(__err);
-                            }
-                        } {
-                            _serde::__private::Some(__value) => __value,
-                            _serde::__private::None => {
-                                return _serde::__private::Err(_serde::de::Error::invalid_length(
-                                    1usize,
-                                    &"struct AppConfig with 2 elements",
-                                ));
-                            }
-                        };
-                        _serde::__private::Ok(AppConfig {
-                            auth_key: __field0,
-                            bridge_ipaddr: __field1,
+                        let __field0 =
+                            match match _serde::de::SeqAccess::next_element::<IpAddr>(&mut __seq) {
+                                _serde::__private::Ok(__val) => __val,
+                                _serde::__private::Err(__err) => {
+                                    return _serde::__private::Err(__err);
+                                }
+                            } {
+                                _serde::__private::Some(__value) => __value,
+                                _serde::__private::None => {
+                                    return _serde::__private::Err(
+                                        _serde::de::Error::invalid_length(
+                                            0usize,
+                                            &"struct AuthAppConfig with 2 elements",
+                                        ),
+                                    );
+                                }
+                            };
+                        let __field1 =
+                            match match _serde::de::SeqAccess::next_element::<String>(&mut __seq) {
+                                _serde::__private::Ok(__val) => __val,
+                                _serde::__private::Err(__err) => {
+                                    return _serde::__private::Err(__err);
+                                }
+                            } {
+                                _serde::__private::Some(__value) => __value,
+                                _serde::__private::None => {
+                                    return _serde::__private::Err(
+                                        _serde::de::Error::invalid_length(
+                                            1usize,
+                                            &"struct AuthAppConfig with 2 elements",
+                                        ),
+                                    );
+                                }
+                            };
+                        _serde::__private::Ok(AuthAppConfig {
+                            ip: __field0,
+                            key: __field1,
                         })
                     }
                     #[inline]
@@ -1483,9 +2008,9 @@ pub mod config {
                     where
                         __A: _serde::de::MapAccess<'de>,
                     {
-                        let mut __field0: _serde::__private::Option<Option<String>> =
+                        let mut __field0: _serde::__private::Option<IpAddr> =
                             _serde::__private::None;
-                        let mut __field1: _serde::__private::Option<Option<IpAddr>> =
+                        let mut __field1: _serde::__private::Option<String> =
                             _serde::__private::None;
                         while let _serde::__private::Some(__key) =
                             match _serde::de::MapAccess::next_key::<__Field>(&mut __map) {
@@ -1500,12 +2025,12 @@ pub mod config {
                                     if _serde::__private::Option::is_some(&__field0) {
                                         return _serde::__private::Err(
                                             <__A::Error as _serde::de::Error>::duplicate_field(
-                                                "auth_key",
+                                                "ip",
                                             ),
                                         );
                                     }
                                     __field0 = _serde::__private::Some(
-                                        match _serde::de::MapAccess::next_value::<Option<String>>(
+                                        match _serde::de::MapAccess::next_value::<IpAddr>(
                                             &mut __map,
                                         ) {
                                             _serde::__private::Ok(__val) => __val,
@@ -1519,12 +2044,12 @@ pub mod config {
                                     if _serde::__private::Option::is_some(&__field1) {
                                         return _serde::__private::Err(
                                             <__A::Error as _serde::de::Error>::duplicate_field(
-                                                "bridge_ipaddr",
+                                                "key",
                                             ),
                                         );
                                     }
                                     __field1 = _serde::__private::Some(
-                                        match _serde::de::MapAccess::next_value::<Option<IpAddr>>(
+                                        match _serde::de::MapAccess::next_value::<String>(
                                             &mut __map,
                                         ) {
                                             _serde::__private::Ok(__val) => __val,
@@ -1550,7 +2075,7 @@ pub mod config {
                         let __field0 = match __field0 {
                             _serde::__private::Some(__field0) => __field0,
                             _serde::__private::None => {
-                                match _serde::__private::de::missing_field("auth_key") {
+                                match _serde::__private::de::missing_field("ip") {
                                     _serde::__private::Ok(__val) => __val,
                                     _serde::__private::Err(__err) => {
                                         return _serde::__private::Err(__err);
@@ -1561,7 +2086,7 @@ pub mod config {
                         let __field1 = match __field1 {
                             _serde::__private::Some(__field1) => __field1,
                             _serde::__private::None => {
-                                match _serde::__private::de::missing_field("bridge_ipaddr") {
+                                match _serde::__private::de::missing_field("key") {
                                     _serde::__private::Ok(__val) => __val,
                                     _serde::__private::Err(__err) => {
                                         return _serde::__private::Err(__err);
@@ -1569,19 +2094,19 @@ pub mod config {
                                 }
                             }
                         };
-                        _serde::__private::Ok(AppConfig {
-                            auth_key: __field0,
-                            bridge_ipaddr: __field1,
+                        _serde::__private::Ok(AuthAppConfig {
+                            ip: __field0,
+                            key: __field1,
                         })
                     }
                 }
-                const FIELDS: &'static [&'static str] = &["auth_key", "bridge_ipaddr"];
+                const FIELDS: &'static [&'static str] = &["ip", "key"];
                 _serde::Deserializer::deserialize_struct(
                     __deserializer,
-                    "AppConfig",
+                    "AuthAppConfig",
                     FIELDS,
                     __Visitor {
-                        marker: _serde::__private::PhantomData::<AppConfig>,
+                        marker: _serde::__private::PhantomData::<AuthAppConfig>,
                         lifetime: _serde::__private::PhantomData,
                     },
                 )
@@ -1589,12 +2114,39 @@ pub mod config {
         }
     };
     #[automatically_derived]
-    impl ::core::default::Default for AppConfig {
+    impl ::core::fmt::Debug for AuthAppConfig {
+        fn fmt(&self, f: &mut ::core::fmt::Formatter) -> ::core::fmt::Result {
+            ::core::fmt::Formatter::debug_struct_field2_finish(
+                f,
+                "AuthAppConfig",
+                "ip",
+                &&self.ip,
+                "key",
+                &&self.key,
+            )
+        }
+    }
+    #[automatically_derived]
+    impl ::core::clone::Clone for AuthAppConfig {
         #[inline]
-        fn default() -> AppConfig {
-            AppConfig {
-                auth_key: ::core::default::Default::default(),
-                bridge_ipaddr: ::core::default::Default::default(),
+        fn clone(&self) -> AuthAppConfig {
+            AuthAppConfig {
+                ip: ::core::clone::Clone::clone(&self.ip),
+                key: ::core::clone::Clone::clone(&self.key),
+            }
+        }
+    }
+    impl Default for AppConfig {
+        fn default() -> Self {
+            AppConfig::Uninit
+        }
+    }
+    impl AppConfig {
+        pub fn is_configured(&self) -> bool {
+            match self {
+                AppConfig::Uninit => false,
+                AppConfig::Unauth { .. } => false,
+                AppConfig::Auth { .. } => true,
             }
         }
     }
@@ -1618,7 +2170,7 @@ pub mod config {
 pub mod error {
     pub enum AppError {
         #[error("network error")]
-        NetworkError,
+        NetworkError(#[from] reqwest::Error),
         #[error("Hue bridge not found")]
         HueBridgeNotFoundError,
         #[error("Hue bridge ip address not found")]
@@ -1638,7 +2190,9 @@ pub mod error {
     impl ::core::fmt::Debug for AppError {
         fn fmt(&self, f: &mut ::core::fmt::Formatter) -> ::core::fmt::Result {
             match self {
-                AppError::NetworkError => ::core::fmt::Formatter::write_str(f, "NetworkError"),
+                AppError::NetworkError(__self_0) => {
+                    ::core::fmt::Formatter::debug_tuple_field1_finish(f, "NetworkError", &__self_0)
+                }
                 AppError::HueBridgeNotFoundError => {
                     ::core::fmt::Formatter::write_str(f, "HueBridgeNotFoundError")
                 }
@@ -1660,13 +2214,30 @@ pub mod error {
         }
     }
     #[allow(unused_qualifications)]
-    impl std::error::Error for AppError {}
+    impl std::error::Error for AppError {
+        fn source(&self) -> std::option::Option<&(dyn std::error::Error + 'static)> {
+            use thiserror::__private::AsDynError;
+            #[allow(deprecated)]
+            match self {
+                AppError::NetworkError { 0: source, .. } => {
+                    std::option::Option::Some(source.as_dyn_error())
+                }
+                AppError::HueBridgeNotFoundError { .. } => std::option::Option::None,
+                AppError::HueBridgeAddressNotFoundError { .. } => std::option::Option::None,
+                AppError::HueBridgeTimeout { .. } => std::option::Option::None,
+                AppError::HueBridgeMisconfigured { .. } => std::option::Option::None,
+                AppError::HueBridgeAuthKeyInvalid { .. } => std::option::Option::None,
+                AppError::APINotFound { .. } => std::option::Option::None,
+                AppError::Other { .. } => std::option::Option::None,
+            }
+        }
+    }
     #[allow(unused_qualifications)]
     impl std::fmt::Display for AppError {
         fn fmt(&self, __formatter: &mut std::fmt::Formatter) -> std::fmt::Result {
             #[allow(unused_variables, deprecated, clippy::used_underscore_binding)]
             match self {
-                AppError::NetworkError {} => {
+                AppError::NetworkError(_0) => {
                     __formatter.write_fmt(::core::fmt::Arguments::new_v1(&["network error"], &[]))
                 }
                 AppError::HueBridgeNotFoundError {} => __formatter.write_fmt(
@@ -1690,6 +2261,13 @@ pub mod error {
                     __formatter.write_fmt(::core::fmt::Arguments::new_v1(&["other error"], &[]))
                 }
             }
+        }
+    }
+    #[allow(unused_qualifications)]
+    impl std::convert::From<reqwest::Error> for AppError {
+        #[allow(deprecated)]
+        fn from(source: reqwest::Error) -> Self {
+            AppError::NetworkError { 0: source }
         }
     }
 }
@@ -2772,20 +3350,17 @@ pub mod hue {
         /// A Hue Bridge client providing API commands
         ///
         pub struct Bridge {
-            pub ip_address: IpAddr,
-            pub auth_key: String,
+            pub config: AppConfig,
             pub client: reqwest::Client,
         }
         #[automatically_derived]
         impl ::core::fmt::Debug for Bridge {
             fn fmt(&self, f: &mut ::core::fmt::Formatter) -> ::core::fmt::Result {
-                ::core::fmt::Formatter::debug_struct_field3_finish(
+                ::core::fmt::Formatter::debug_struct_field2_finish(
                     f,
                     "Bridge",
-                    "ip_address",
-                    &&self.ip_address,
-                    "auth_key",
-                    &&self.auth_key,
+                    "config",
+                    &&self.config,
                     "client",
                     &&self.client,
                 )
@@ -3226,15 +3801,11 @@ pub mod hue {
                         }
                     }
                 }
-                let cfg = get_app_cfg();
-                let ip_address = cfg.bridge_ipaddr.unwrap();
-                let auth_key = cfg.auth_key.unwrap();
+                Self::new_with_config(get_app_cfg())
+            }
+            pub fn new_with_config(config: AppConfig) -> Self {
                 let client = reqwest::Client::builder().build().unwrap();
-                Self {
-                    ip_address,
-                    auth_key,
-                    client,
-                }
+                Self { config, client }
             }
         }
         impl Bridge {
@@ -3250,7 +3821,7 @@ pub mod hue {
                                 "kwhue::hue::bridge",
                                 tracing::Level::INFO,
                                 Some("src/hue/bridge.rs"),
-                                Some(116u32),
+                                Some(111u32),
                                 Some("kwhue::hue::bridge"),
                                 ::tracing_core::field::FieldSet::new(
                                     &["endpoint"],
@@ -3282,7 +3853,34 @@ pub mod hue {
                         })
                     } else {
                         let span = ::tracing::__macro_support::__disabled_span(CALLSITE.metadata());
-                        {};
+                        if match tracing::Level::INFO {
+                            ::tracing::Level::ERROR => ::tracing::log::Level::Error,
+                            ::tracing::Level::WARN => ::tracing::log::Level::Warn,
+                            ::tracing::Level::INFO => ::tracing::log::Level::Info,
+                            ::tracing::Level::DEBUG => ::tracing::log::Level::Debug,
+                            _ => ::tracing::log::Level::Trace,
+                        } <= ::tracing::log::STATIC_MAX_LEVEL
+                        {
+                            if !::tracing::dispatcher::has_been_set() {
+                                {
+                                    span.record_all(&{
+                                        #[allow(unused_imports)]
+                                        use ::tracing::field::{debug, display, Value};
+                                        let mut iter = CALLSITE.metadata().fields().iter();
+                                        CALLSITE.metadata().fields().value_set(&[(
+                                            &iter
+                                                .next()
+                                                .expect("FieldSet corrupted (this is a bug)"),
+                                            Some(&endpoint as &dyn Value),
+                                        )])
+                                    });
+                                }
+                            } else {
+                                {}
+                            }
+                        } else {
+                            {}
+                        };
                         span
                     }
                 };
@@ -3297,28 +3895,17 @@ pub mod hue {
                         return __tracing_attr_fake_return;
                     }
                     {
-                        let cfg = get_app_cfg();
-                        let url = {
-                            let res = ::alloc::fmt::format(::core::fmt::Arguments::new_v1(
-                                &["http://", "/api/", "/"],
-                                &[
-                                    ::core::fmt::ArgumentV1::new_display(&self.ip_address),
-                                    ::core::fmt::ArgumentV1::new_display(&cfg.auth_key.unwrap()),
-                                    ::core::fmt::ArgumentV1::new_display(&endpoint),
-                                ],
-                            ));
-                            res
-                        };
+                        let url = self.get_url(endpoint)?;
                         {
                             use ::tracing::__macro_support::Callsite as _;
                             static CALLSITE: ::tracing::callsite::DefaultCallsite = {
                                 static META: ::tracing::Metadata<'static> = {
                                     ::tracing_core::metadata::Metadata::new(
-                                        "event src/hue/bridge.rs:126",
+                                        "event src/hue/bridge.rs:115",
                                         "kwhue::hue::bridge",
                                         ::tracing::Level::TRACE,
                                         Some("src/hue/bridge.rs"),
-                                        Some(126u32),
+                                        Some(115u32),
                                         Some("kwhue::hue::bridge"),
                                         ::tracing_core::field::FieldSet::new(
                                             &["message", "url"],
@@ -3345,6 +3932,52 @@ pub mod hue {
                                 (|value_set: ::tracing::field::ValueSet| {
                                     let meta = CALLSITE.metadata();
                                     ::tracing::Event::dispatch(meta, &value_set);
+                                    if match ::tracing::Level::TRACE {
+                                        ::tracing::Level::ERROR => ::tracing::log::Level::Error,
+                                        ::tracing::Level::WARN => ::tracing::log::Level::Warn,
+                                        ::tracing::Level::INFO => ::tracing::log::Level::Info,
+                                        ::tracing::Level::DEBUG => ::tracing::log::Level::Debug,
+                                        _ => ::tracing::log::Level::Trace,
+                                    } <= ::tracing::log::STATIC_MAX_LEVEL
+                                    {
+                                        if !::tracing::dispatcher::has_been_set() {
+                                            {
+                                                use ::tracing::log;
+                                                let level = match ::tracing::Level::TRACE {
+                                                    ::tracing::Level::ERROR => {
+                                                        ::tracing::log::Level::Error
+                                                    }
+                                                    ::tracing::Level::WARN => {
+                                                        ::tracing::log::Level::Warn
+                                                    }
+                                                    ::tracing::Level::INFO => {
+                                                        ::tracing::log::Level::Info
+                                                    }
+                                                    ::tracing::Level::DEBUG => {
+                                                        ::tracing::log::Level::Debug
+                                                    }
+                                                    _ => ::tracing::log::Level::Trace,
+                                                };
+                                                if level <= log::max_level() {
+                                                    let meta = CALLSITE.metadata();
+                                                    let log_meta = log::Metadata::builder()
+                                                        .level(level)
+                                                        .target(meta.target())
+                                                        .build();
+                                                    let logger = log::logger();
+                                                    if logger.enabled(&log_meta) {
+                                                        ::tracing::__macro_support::__tracing_log(
+                                                            meta, logger, log_meta, &value_set,
+                                                        )
+                                                    }
+                                                }
+                                            }
+                                        } else {
+                                            {}
+                                        }
+                                    } else {
+                                        {}
+                                    };
                                 })({
                                     #[allow(unused_imports)]
                                     use ::tracing::field::{debug, display, Value};
@@ -3368,6 +4001,63 @@ pub mod hue {
                                     ])
                                 });
                             } else {
+                                if match ::tracing::Level::TRACE {
+                                    ::tracing::Level::ERROR => ::tracing::log::Level::Error,
+                                    ::tracing::Level::WARN => ::tracing::log::Level::Warn,
+                                    ::tracing::Level::INFO => ::tracing::log::Level::Info,
+                                    ::tracing::Level::DEBUG => ::tracing::log::Level::Debug,
+                                    _ => ::tracing::log::Level::Trace,
+                                } <= ::tracing::log::STATIC_MAX_LEVEL
+                                {
+                                    if !::tracing::dispatcher::has_been_set() {
+                                        {
+                                            use ::tracing::log;
+                                            let level = match ::tracing::Level::TRACE {
+                                                ::tracing::Level::ERROR => {
+                                                    ::tracing::log::Level::Error
+                                                }
+                                                ::tracing::Level::WARN => {
+                                                    ::tracing::log::Level::Warn
+                                                }
+                                                ::tracing::Level::INFO => {
+                                                    ::tracing::log::Level::Info
+                                                }
+                                                ::tracing::Level::DEBUG => {
+                                                    ::tracing::log::Level::Debug
+                                                }
+                                                _ => ::tracing::log::Level::Trace,
+                                            };
+                                            if level <= log::max_level() {
+                                                let meta = CALLSITE.metadata();
+                                                let log_meta = log::Metadata::builder()
+                                                    .level(level)
+                                                    .target(meta.target())
+                                                    .build();
+                                                let logger = log::logger();
+                                                if logger.enabled(&log_meta) {
+                                                    ::tracing::__macro_support::__tracing_log(
+                                                        meta,
+                                                        logger,
+                                                        log_meta,
+                                                        &{
+                                                            #[allow(unused_imports)]
+                                                            use ::tracing::field::{
+                                                                debug, display, Value,
+                                                            };
+                                                            let mut iter =
+                                                                CALLSITE.metadata().fields().iter();
+                                                            CALLSITE . metadata () . fields () . value_set (& [(& iter . next () . expect ("FieldSet corrupted (this is a bug)") , Some (& :: core :: fmt :: Arguments :: new_v1 (& ["fetching"] , & []) as & dyn Value)) , (& iter . next () . expect ("FieldSet corrupted (this is a bug)") , Some (& url as & dyn Value))])
+                                                        },
+                                                    )
+                                                }
+                                            }
+                                        }
+                                    } else {
+                                        {}
+                                    }
+                                } else {
+                                    {}
+                                };
                             }
                         };
                         let resp = self
@@ -3375,9 +4065,7 @@ pub mod hue {
                             .get(url)
                             .timeout(std::time::Duration::from_millis(500))
                             .send()
-                            .await
-                            .map_err(|_| AppError::NetworkError)
-                            .unwrap();
+                            .await?;
                         let status = resp.status();
                         match status {
                             StatusCode::OK => Ok(resp.json().await.map_err(|_| AppError::Other)?),
@@ -3396,22 +4084,9 @@ pub mod hue {
                     __tracing_instrument_future.await
                 }
             }
-        }
-        impl Bridge {
             /// Puts the given data to the given endpoint
             pub async fn put(&self, endpoint: &str, data: &LightState) -> Result<(), AppError> {
-                let cfg = get_app_cfg();
-                let url = {
-                    let res = ::alloc::fmt::format(::core::fmt::Arguments::new_v1(
-                        &["http://", "/api/", "/"],
-                        &[
-                            ::core::fmt::ArgumentV1::new_display(&self.ip_address),
-                            ::core::fmt::ArgumentV1::new_display(&cfg.auth_key.unwrap()),
-                            ::core::fmt::ArgumentV1::new_display(&endpoint),
-                        ],
-                    ));
-                    res
-                };
+                let url = self.get_url(endpoint)?;
                 let body_json = serde_json::to_string(data).unwrap();
                 let resp = self.client.put(&url).body(body_json).send().await.unwrap();
                 match resp.status() {
@@ -3424,27 +4099,47 @@ pub mod hue {
                 let data: ConfigInfo = self.get("config").await?;
                 Ok(data)
             }
+            fn get_url(&self, endpoint: &str) -> Result<String, AppError> {
+                match &self.config {
+                    AppConfig::Uninit => Err(AppError::Other),
+                    AppConfig::Unauth { ip } => Ok({
+                        let res = ::alloc::fmt::format(::core::fmt::Arguments::new_v1(
+                            &["http://", "/api/"],
+                            &[
+                                ::core::fmt::ArgumentV1::new_display(&ip),
+                                ::core::fmt::ArgumentV1::new_display(&endpoint),
+                            ],
+                        ));
+                        res
+                    }),
+                    AppConfig::Auth(AuthAppConfig { ip, key }) => Ok({
+                        let res = ::alloc::fmt::format(::core::fmt::Arguments::new_v1(
+                            &["http://", "/api/", "/"],
+                            &[
+                                ::core::fmt::ArgumentV1::new_display(&ip),
+                                ::core::fmt::ArgumentV1::new_display(&key),
+                                ::core::fmt::ArgumentV1::new_display(&endpoint),
+                            ],
+                        ));
+                        res
+                    }),
+                }
+            }
         }
         /// Return true if config file contains an ip address and auth key.
         fn is_configured() -> bool {
-            let cfg = get_app_cfg();
-            cfg.bridge_ipaddr.is_some() && cfg.auth_key.is_some()
+            get_app_cfg().is_configured()
         }
         /// Gets the IP address, creates an auth_key, and saves both to the config file.
-        async fn configure() -> Result<(), AppError> {
-            let mut cfg = get_app_cfg();
-            let ipaddr = match get_bridge_ipaddr().await {
-                Ok(ipaddr) => ipaddr,
-                Err(err) => return Err(err),
+        async fn configure() -> Result<AuthAppConfig, AppError> {
+            let ipaddr = get_bridge_ipaddr().await?;
+            let auth_key = create_new_auth_key(ipaddr).await?;
+            let cfg = AuthAppConfig {
+                ip: ipaddr,
+                key: auth_key,
             };
-            let auth_key = match create_new_auth_key(ipaddr).await {
-                Ok(auth_key) => auth_key,
-                Err(err) => return Err(err),
-            };
-            cfg.bridge_ipaddr = Some(ipaddr);
-            cfg.auth_key = Some(auth_key);
-            store_app_cfg(&cfg);
-            Ok(())
+            store_app_cfg(&AppConfig::Auth(cfg.clone()));
+            Ok(cfg)
         }
         /// Gets the Hue Bridge ip address.
         pub async fn get_bridge_ipaddr() -> Result<IpAddr, AppError> {
@@ -3595,7 +4290,26 @@ pub mod hue {
                         ::tracing::Span::new(meta, &{ meta.fields().value_set(&[]) })
                     } else {
                         let span = ::tracing::__macro_support::__disabled_span(CALLSITE.metadata());
-                        {};
+                        if match tracing::Level::INFO {
+                            ::tracing::Level::ERROR => ::tracing::log::Level::Error,
+                            ::tracing::Level::WARN => ::tracing::log::Level::Warn,
+                            ::tracing::Level::INFO => ::tracing::log::Level::Info,
+                            ::tracing::Level::DEBUG => ::tracing::log::Level::Debug,
+                            _ => ::tracing::log::Level::Trace,
+                        } <= ::tracing::log::STATIC_MAX_LEVEL
+                        {
+                            if !::tracing::dispatcher::has_been_set() {
+                                {
+                                    span.record_all(&{
+                                        CALLSITE.metadata().fields().value_set(&[])
+                                    });
+                                }
+                            } else {
+                                {}
+                            }
+                        } else {
+                            {}
+                        };
                         span
                     }
                 };
@@ -3646,6 +4360,52 @@ pub mod hue {
                                 (|value_set: ::tracing::field::ValueSet| {
                                     let meta = CALLSITE.metadata();
                                     ::tracing::Event::dispatch(meta, &value_set);
+                                    if match ::tracing::Level::DEBUG {
+                                        ::tracing::Level::ERROR => ::tracing::log::Level::Error,
+                                        ::tracing::Level::WARN => ::tracing::log::Level::Warn,
+                                        ::tracing::Level::INFO => ::tracing::log::Level::Info,
+                                        ::tracing::Level::DEBUG => ::tracing::log::Level::Debug,
+                                        _ => ::tracing::log::Level::Trace,
+                                    } <= ::tracing::log::STATIC_MAX_LEVEL
+                                    {
+                                        if !::tracing::dispatcher::has_been_set() {
+                                            {
+                                                use ::tracing::log;
+                                                let level = match ::tracing::Level::DEBUG {
+                                                    ::tracing::Level::ERROR => {
+                                                        ::tracing::log::Level::Error
+                                                    }
+                                                    ::tracing::Level::WARN => {
+                                                        ::tracing::log::Level::Warn
+                                                    }
+                                                    ::tracing::Level::INFO => {
+                                                        ::tracing::log::Level::Info
+                                                    }
+                                                    ::tracing::Level::DEBUG => {
+                                                        ::tracing::log::Level::Debug
+                                                    }
+                                                    _ => ::tracing::log::Level::Trace,
+                                                };
+                                                if level <= log::max_level() {
+                                                    let meta = CALLSITE.metadata();
+                                                    let log_meta = log::Metadata::builder()
+                                                        .level(level)
+                                                        .target(meta.target())
+                                                        .build();
+                                                    let logger = log::logger();
+                                                    if logger.enabled(&log_meta) {
+                                                        ::tracing::__macro_support::__tracing_log(
+                                                            meta, logger, log_meta, &value_set,
+                                                        )
+                                                    }
+                                                }
+                                            }
+                                        } else {
+                                            {}
+                                        }
+                                    } else {
+                                        {}
+                                    };
                                 })({
                                     #[allow(unused_imports)]
                                     use ::tracing::field::{debug, display, Value};
@@ -3660,6 +4420,63 @@ pub mod hue {
                                     )])
                                 });
                             } else {
+                                if match ::tracing::Level::DEBUG {
+                                    ::tracing::Level::ERROR => ::tracing::log::Level::Error,
+                                    ::tracing::Level::WARN => ::tracing::log::Level::Warn,
+                                    ::tracing::Level::INFO => ::tracing::log::Level::Info,
+                                    ::tracing::Level::DEBUG => ::tracing::log::Level::Debug,
+                                    _ => ::tracing::log::Level::Trace,
+                                } <= ::tracing::log::STATIC_MAX_LEVEL
+                                {
+                                    if !::tracing::dispatcher::has_been_set() {
+                                        {
+                                            use ::tracing::log;
+                                            let level = match ::tracing::Level::DEBUG {
+                                                ::tracing::Level::ERROR => {
+                                                    ::tracing::log::Level::Error
+                                                }
+                                                ::tracing::Level::WARN => {
+                                                    ::tracing::log::Level::Warn
+                                                }
+                                                ::tracing::Level::INFO => {
+                                                    ::tracing::log::Level::Info
+                                                }
+                                                ::tracing::Level::DEBUG => {
+                                                    ::tracing::log::Level::Debug
+                                                }
+                                                _ => ::tracing::log::Level::Trace,
+                                            };
+                                            if level <= log::max_level() {
+                                                let meta = CALLSITE.metadata();
+                                                let log_meta = log::Metadata::builder()
+                                                    .level(level)
+                                                    .target(meta.target())
+                                                    .build();
+                                                let logger = log::logger();
+                                                if logger.enabled(&log_meta) {
+                                                    ::tracing::__macro_support::__tracing_log(
+                                                        meta,
+                                                        logger,
+                                                        log_meta,
+                                                        &{
+                                                            #[allow(unused_imports)]
+                                                            use ::tracing::field::{
+                                                                debug, display, Value,
+                                                            };
+                                                            let mut iter =
+                                                                CALLSITE.metadata().fields().iter();
+                                                            CALLSITE . metadata () . fields () . value_set (& [(& iter . next () . expect ("FieldSet corrupted (this is a bug)") , Some (& :: core :: fmt :: Arguments :: new_v1 (& ["getting lights"] , & []) as & dyn Value))])
+                                                        },
+                                                    )
+                                                }
+                                            }
+                                        }
+                                    } else {
+                                        {}
+                                    }
+                                } else {
+                                    {}
+                                };
                             }
                         };
                         let data: JsonMap = self.get("lights").await?;
@@ -6373,28 +7190,38 @@ pub mod hue {
         #[builder(build_fn(validate = "Self::validate"))]
         pub struct LightState {
             #[serde(skip_serializing_if = "Option::is_none")]
+            #[builder(default)]
             pub on: Option<bool>,
             #[serde(rename = "bri")]
             #[serde(skip_serializing_if = "Option::is_none")]
+            #[builder(default)]
             pub brightness: Option<u32>,
             #[serde(skip_serializing_if = "Option::is_none")]
+            #[builder(default)]
             pub hue: Option<u32>,
             #[serde(rename = "sat")]
             #[serde(skip_serializing_if = "Option::is_none")]
+            #[builder(default)]
             pub saturation: Option<u8>,
             #[serde(rename = "colormode")]
             #[serde(skip_serializing_if = "Option::is_none")]
+            #[builder(default)]
             pub colour_mode: Option<String>,
             #[serde(rename = "ct")]
             #[serde(skip_serializing_if = "Option::is_none")]
+            #[builder(default)]
             pub colour_temperature: Option<u32>,
             #[serde(skip_serializing_if = "Option::is_none")]
+            #[builder(default)]
             pub xy: Option<XY>,
             #[serde(skip_serializing_if = "Option::is_none")]
+            #[builder(default)]
             pub mode: Option<String>,
             #[serde(skip_serializing_if = "Option::is_none")]
+            #[builder(default)]
             pub reachable: Option<bool>,
             #[serde(skip_serializing_if = "Option::is_none")]
+            #[builder(default)]
             pub alert: Option<String>,
         }
         #[automatically_derived]
@@ -7606,123 +8433,61 @@ pub mod hue {
                         Some(ref value) => {
                             ::derive_builder::export::core::clone::Clone::clone(value)
                         }
-                        None => {
-                            return ::derive_builder::export::core::result::Result::Err(
-                                ::derive_builder::export::core::convert::Into::into(
-                                    ::derive_builder::UninitializedFieldError::from("on"),
-                                ),
-                            )
-                        }
+                        None => ::derive_builder::export::core::default::Default::default(),
                     },
                     brightness: match self.brightness {
                         Some(ref value) => {
                             ::derive_builder::export::core::clone::Clone::clone(value)
                         }
-                        None => {
-                            return ::derive_builder::export::core::result::Result::Err(
-                                ::derive_builder::export::core::convert::Into::into(
-                                    ::derive_builder::UninitializedFieldError::from("brightness"),
-                                ),
-                            )
-                        }
+                        None => ::derive_builder::export::core::default::Default::default(),
                     },
                     hue: match self.hue {
                         Some(ref value) => {
                             ::derive_builder::export::core::clone::Clone::clone(value)
                         }
-                        None => {
-                            return ::derive_builder::export::core::result::Result::Err(
-                                ::derive_builder::export::core::convert::Into::into(
-                                    ::derive_builder::UninitializedFieldError::from("hue"),
-                                ),
-                            )
-                        }
+                        None => ::derive_builder::export::core::default::Default::default(),
                     },
                     saturation: match self.saturation {
                         Some(ref value) => {
                             ::derive_builder::export::core::clone::Clone::clone(value)
                         }
-                        None => {
-                            return ::derive_builder::export::core::result::Result::Err(
-                                ::derive_builder::export::core::convert::Into::into(
-                                    ::derive_builder::UninitializedFieldError::from("saturation"),
-                                ),
-                            )
-                        }
+                        None => ::derive_builder::export::core::default::Default::default(),
                     },
                     colour_mode: match self.colour_mode {
                         Some(ref value) => {
                             ::derive_builder::export::core::clone::Clone::clone(value)
                         }
-                        None => {
-                            return ::derive_builder::export::core::result::Result::Err(
-                                ::derive_builder::export::core::convert::Into::into(
-                                    ::derive_builder::UninitializedFieldError::from("colour_mode"),
-                                ),
-                            )
-                        }
+                        None => ::derive_builder::export::core::default::Default::default(),
                     },
                     colour_temperature: match self.colour_temperature {
                         Some(ref value) => {
                             ::derive_builder::export::core::clone::Clone::clone(value)
                         }
-                        None => {
-                            return ::derive_builder::export::core::result::Result::Err(
-                                ::derive_builder::export::core::convert::Into::into(
-                                    ::derive_builder::UninitializedFieldError::from(
-                                        "colour_temperature",
-                                    ),
-                                ),
-                            )
-                        }
+                        None => ::derive_builder::export::core::default::Default::default(),
                     },
                     xy: match self.xy {
                         Some(ref value) => {
                             ::derive_builder::export::core::clone::Clone::clone(value)
                         }
-                        None => {
-                            return ::derive_builder::export::core::result::Result::Err(
-                                ::derive_builder::export::core::convert::Into::into(
-                                    ::derive_builder::UninitializedFieldError::from("xy"),
-                                ),
-                            )
-                        }
+                        None => ::derive_builder::export::core::default::Default::default(),
                     },
                     mode: match self.mode {
                         Some(ref value) => {
                             ::derive_builder::export::core::clone::Clone::clone(value)
                         }
-                        None => {
-                            return ::derive_builder::export::core::result::Result::Err(
-                                ::derive_builder::export::core::convert::Into::into(
-                                    ::derive_builder::UninitializedFieldError::from("mode"),
-                                ),
-                            )
-                        }
+                        None => ::derive_builder::export::core::default::Default::default(),
                     },
                     reachable: match self.reachable {
                         Some(ref value) => {
                             ::derive_builder::export::core::clone::Clone::clone(value)
                         }
-                        None => {
-                            return ::derive_builder::export::core::result::Result::Err(
-                                ::derive_builder::export::core::convert::Into::into(
-                                    ::derive_builder::UninitializedFieldError::from("reachable"),
-                                ),
-                            )
-                        }
+                        None => ::derive_builder::export::core::default::Default::default(),
                     },
                     alert: match self.alert {
                         Some(ref value) => {
                             ::derive_builder::export::core::clone::Clone::clone(value)
                         }
-                        None => {
-                            return ::derive_builder::export::core::result::Result::Err(
-                                ::derive_builder::export::core::convert::Into::into(
-                                    ::derive_builder::UninitializedFieldError::from("alert"),
-                                ),
-                            )
-                        }
+                        None => ::derive_builder::export::core::default::Default::default(),
                     },
                 })
             }
@@ -7817,9 +8582,6 @@ pub mod hue {
         impl std::error::Error for LightStateBuilderError {}
         impl LightStateBuilder {
             fn validate(&self) -> Result<(), String> {
-                if self.on.is_none() && self.brightness.is_none() {
-                    return Err("Either on or brightness must be set".to_string());
-                }
                 Ok(())
             }
         }

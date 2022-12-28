@@ -9,7 +9,10 @@ use mdns::{Record, RecordKind};
 use reqwest::StatusCode;
 use serde::{de::DeserializeOwned, Deserialize, Serialize};
 use std::io::Write;
-use std::{collections::HashMap, net::IpAddr, time::Duration};
+use std::{
+    collections::HashMap, net::IpAddr, net::SocketAddr, net::SocketAddrV4, net::SocketAddrV6,
+    time::Duration,
+};
 use tokio::time::timeout;
 use tracing::trace;
 
@@ -61,8 +64,7 @@ pub enum BridgeStatus {
 ///
 #[derive(Debug)]
 pub struct Bridge {
-    pub ip_address: IpAddr,
-    pub auth_key: String,
+    pub config: AppConfig,
     pub client: reqwest::Client,
     //     pub config_info: ConfigInfo,
 }
@@ -100,17 +102,10 @@ impl Bridge {
         Self::new_with_config(get_app_cfg())
     }
 
-    pub fn new_with_config(cfg: AppConfig) -> Self {
-        let ip_address = cfg.bridge_ipaddr.unwrap();
-        let auth_key = cfg.auth_key.unwrap();
-
+    pub fn new_with_config(config: AppConfig) -> Self {
         let client = reqwest::Client::builder().build().unwrap();
 
-        Self {
-            ip_address,
-            auth_key,
-            client,
-        }
+        Self { config, client }
     }
 }
 
@@ -118,13 +113,7 @@ impl Bridge {
     /// Gets an endpoint response and deserialises it.
     #[tracing::instrument(skip(self))]
     pub async fn get<T: DeserializeOwned>(&self, endpoint: &str) -> Result<T, AppError> {
-        let cfg = get_app_cfg();
-        let url = format!(
-            "http://{}/api/{}/{}",
-            self.ip_address,
-            cfg.auth_key.unwrap(),
-            endpoint
-        );
+        let url = self.get_url(endpoint)?;
 
         trace!(url, "fetching");
 
@@ -133,30 +122,22 @@ impl Bridge {
             .get(url)
             .timeout(std::time::Duration::from_millis(500))
             .send()
-            .await
-            .map_err(|_| AppError::NetworkError)
-            .unwrap();
+            // we have a From impl from reqwest::Error to AppError
+            // so we can use the ? operator to convert the error automatically
+            .await?;
 
         let status = resp.status();
 
         match status {
-            StatusCode::OK => Ok(resp.json().await.map_err(|_| AppError::Other)?),
+            StatusCode::OK => Ok(resp.json().await?),
             StatusCode::NOT_FOUND => Err(AppError::APINotFound),
             _ => Err(AppError::Other),
         }
     }
-}
 
-impl Bridge {
     /// Puts the given data to the given endpoint
     pub async fn put(&self, endpoint: &str, data: &LightState) -> Result<(), AppError> {
-        let cfg = get_app_cfg();
-        let url = format!(
-            "http://{}/api/{}/{}",
-            self.ip_address,
-            cfg.auth_key.unwrap(),
-            endpoint
-        );
+        let url = self.get_url(endpoint)?;
         let body_json = serde_json::to_string(data).unwrap();
         let resp = self.client.put(&url).body(body_json).send().await.unwrap();
 
@@ -172,37 +153,46 @@ impl Bridge {
 
         Ok(data)
     }
+
+    fn get_url(&self, endpoint: &str) -> Result<String, AppError> {
+        // if we match on the object, the internals are moved into the match statement
+        // this allows you to do things like
+        // let url = match option {
+        //     Some(s) => s,
+        //     None => todo!(),
+        // }
+        // now url 'owns' the data that was in the option variable
+        match &self.config {
+            AppConfig::Uninit => Err(AppError::Other),
+            AppConfig::Unauth { ip } => Ok(format!("http://{}/api/{}", ip, endpoint)),
+            AppConfig::Auth(AuthAppConfig { ip, key }) => {
+                Ok(format!("http://{}/api/{}/{}", ip, key, endpoint))
+            }
+        }
+    }
 }
 
 /// Return true if config file contains an ip address and auth key.
 fn is_configured() -> bool {
-    let cfg = get_app_cfg();
-    cfg.bridge_ipaddr.is_some() && cfg.auth_key.is_some()
+    get_app_cfg().is_configured()
 }
 
 /// Gets the IP address, creates an auth_key, and saves both to the config file.
-async fn configure() -> Result<(), AppError> {
-    let mut cfg = get_app_cfg();
+async fn configure() -> Result<AuthAppConfig, AppError> {
+    let ipaddr = get_bridge_socket().await?;
+    let auth_key = create_new_auth_key(ipaddr).await?;
 
-    let ipaddr = match get_bridge_ipaddr().await {
-        Ok(ipaddr) => ipaddr,
-        Err(err) => return Err(err),
+    let cfg = AuthAppConfig {
+        ip: ipaddr,
+        key: auth_key,
     };
 
-    let auth_key = match create_new_auth_key(ipaddr).await {
-        Ok(auth_key) => auth_key,
-        Err(err) => return Err(err),
-    };
+    store_app_cfg(&AppConfig::Auth(cfg.clone()));
 
-    cfg.bridge_ipaddr = Some(ipaddr);
-    cfg.auth_key = Some(auth_key);
-
-    store_app_cfg(&cfg);
-
-    Ok(())
+    Ok(cfg)
 }
 /// Gets the Hue Bridge ip address.
-pub async fn get_bridge_ipaddr() -> Result<IpAddr, AppError> {
+pub async fn get_bridge_socket() -> Result<SocketAddr, AppError> {
     const SERVICE_NAME: &str = "_hue._tcp.local";
 
     let responses = mdns::discover::all(SERVICE_NAME, Duration::from_secs(1))
@@ -220,7 +210,7 @@ pub async fn get_bridge_ipaddr() -> Result<IpAddr, AppError> {
     match response {
         Ok(r) => match r {
             Some(Ok(response)) => {
-                let addr = response.records().filter_map(self::to_ip_addr).next();
+                let addr = response.records().filter_map(self::to_socket_addr).next();
                 if let Some(addr) = addr {
                     Ok(addr)
                 } else {
@@ -237,8 +227,8 @@ pub async fn get_bridge_ipaddr() -> Result<IpAddr, AppError> {
 /// Creates a hub authorisation key.
 ///
 /// See [Hue Configuration API](https://developers.meethue.com/develop/hue-api/7-configuration-api/)
-pub async fn create_new_auth_key(ip_addr: IpAddr) -> Result<String, AppError> {
-    let url = format!("http://{}/api", ip_addr);
+pub async fn create_new_auth_key(socket_addr: SocketAddr) -> Result<String, AppError> {
+    let url = format!("http://{}/api", socket_addr);
     let client = reqwest::Client::new();
 
     let mut params = HashMap::new();
@@ -280,17 +270,17 @@ pub async fn create_new_auth_key(ip_addr: IpAddr) -> Result<String, AppError> {
 
 ///
 pub async fn bridge_status() -> BridgeStatus {
-    let result = get_bridge_ipaddr().await;
+    let result = get_bridge_socket().await;
     match result {
         Ok(_) => BridgeStatus::CONNECTED,
         Err(_) => BridgeStatus::DISCONNECTED,
     }
 }
 
-fn to_ip_addr(record: &Record) -> Option<IpAddr> {
+fn to_socket_addr(record: &Record) -> Option<SocketAddr> {
     match record.kind {
-        RecordKind::A(addr) => Some(addr.into()),
-        RecordKind::AAAA(addr) => Some(addr.into()),
+        RecordKind::A(addr) => Some(SocketAddr::new(addr.into(), 80)),
+        RecordKind::AAAA(addr) => Some(SocketAddr::new(addr.into(), 80)),
         _ => None,
     }
 }
@@ -304,17 +294,24 @@ mod tests {
         let mock = httpmock::MockServer::start_async().await;
         let get_lights = mock
             .mock_async(|when, then| {
-                when.method("GET").path("/api/lights");
+                when.method("GET").path("/api/key/lights");
                 then.status(200)
                     .header("content-type", "application/json")
-                    .body(r#"{"lights": {}}"#);
+                    .body(
+                        r#"{"1": {
+                        "capabilities": {
+                            "certified": true,
+                            "control": {}
+                        }
+                    }}"#,
+                    );
             })
             .await;
 
-        let bridge = Bridge::new_with_config(AppConfig {
-            auth_key: None,
-            bridge_ipaddr: Some(mock.address().ip()),
-        });
+        let bridge = Bridge::new_with_config(AppConfig::Auth(AuthAppConfig {
+            key: "key".to_string(),
+            ip: mock.address().to_owned(),
+        }));
 
         let lights = bridge.get_lights().await.unwrap();
 
