@@ -1,0 +1,48 @@
+{
+	"state": {
+		"on": true,
+		"bri": 254,
+		"ct": 366,
+		"alert": "select",
+		"colormode": "ct",
+		"mode": "homeautomation",
+		"reachable": true
+	},
+	"swupdate": {
+		"state": "noupdates",
+		"lastinstall": "2022-12-08T14:24:17"
+	},
+	"type": "Color temperature light",
+	"name": "Bedroom Blue Shade",
+	"modelid": "LTW010",
+	"manufacturername": "Signify Netherlands B.V.",
+	"productname": "Hue ambiance lamp",
+	"capabilities": {
+		"certified": true,
+		"control": {
+			"mindimlevel": 1000,
+			"maxlumen": 806,
+			"ct": {
+				"min": 153,
+				"max": 454
+			}
+		},
+		"streaming": {
+			"renderer": false,
+			"proxy": false
+		}
+	},
+	"config": {
+		"archetype": "tableshade",
+		"function": "functional",
+		"direction": "omnidirectional",
+		"startup": {
+			"mode": "safety",
+			"configured": true
+		}
+	},
+	"uniqueid": "00:17:88:01:04:3f:19:c5-0b",
+	"swversion": "1.101.2",
+	"swconfigid": "683EA546",
+	"productid": "Philips-LTW010-1-A19CTv2"
+}

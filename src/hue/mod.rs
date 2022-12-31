@@ -8,7 +8,7 @@ use serde::de::DeserializeOwned;
 
 use tracing::trace;
 
-use self::api::state_for_light::LightState;
+use self::api::light_state::LightState;
 
 pub mod api;
 

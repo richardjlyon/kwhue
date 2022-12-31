@@ -2,7 +2,7 @@ use crate::{error::AppError, hue::Bridge};
 use serde::{Deserialize, Serialize};
 
 impl Bridge {
-    pub async fn state_for_light(&self, id: &u32) -> Result<LightState, AppError> {
+    pub async fn get_light_state(&self, id: &u32) -> Result<LightState, AppError> {
         let url = format!("lights/{}", id);
         let state_response: StateResponse = self.get(&url).await?;
 
@@ -106,7 +106,10 @@ impl LightStateBuilder {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::hue::api::LightAlert;
+    use crate::{
+        config::{AppConfig, AuthAppConfig},
+        hue::api::LightAlert,
+    };
 
     #[test]
     fn test_lightalert_into() {
@@ -141,6 +144,35 @@ mod tests {
         let expected = "{\"xy\":[3.1,4.2]}";
 
         assert_eq!(expected, json_text);
+    }
+
+    #[tokio::test]
+    async fn test_light_state() {
+        let mock = httpmock::MockServer::start_async().await;
+
+        let test_response = include_str!("test_data/light_state.json");
+
+        let get_light_state_mock = mock
+            .mock_async(|when, then| {
+                when.method("GET").path("/api/auth/lights/1");
+                then.status(200).body(test_response);
+            })
+            .await;
+
+        let bridge = Bridge::new_with_config(AppConfig::Auth(AuthAppConfig {
+            key: "auth".to_string(),
+            ip: mock.address().to_owned(),
+            // ip: SocketAddr::V4(SocketAddrV4::new(std::net::Ipv4Addr::new(10, 1, 1, 1), 80)),
+        }));
+
+        let light = bridge.get_light_state(&1).await.unwrap();
+
+        get_light_state_mock.assert_hits_async(1).await;
+
+        assert_eq!(light.on.unwrap(), true);
+        assert_eq!(light.brightness.unwrap(), 254);
+
+        // println!("{:#?}", light);
     }
 }
 

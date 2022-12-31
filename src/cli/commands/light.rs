@@ -2,7 +2,7 @@
 use colored::*;
 use itertools::Itertools;
 
-use crate::hue::{api::state_for_light::LightState, Bridge};
+use crate::hue::{api::light_state::LightState, Bridge};
 
 /// COMMAND: List all lights
 ///
@@ -29,7 +29,7 @@ pub async fn all(bridge: &Bridge) {
 /// COMMAND: Turn on light with id
 ///
 pub async fn on(bridge: &Bridge, id: &u32) {
-    let current_state = bridge.state_for_light(id).await.unwrap();
+    let current_state = bridge.get_light_state(id).await.unwrap();
     println!("{:#?}", current_state);
 
     let new_state = LightState {
@@ -43,7 +43,7 @@ pub async fn on(bridge: &Bridge, id: &u32) {
 /// COMMAND: Turn off light with id
 ///
 pub async fn off(bridge: &Bridge, id: &u32) {
-    let current_state = bridge.state_for_light(id).await.unwrap();
+    let current_state = bridge.get_light_state(id).await.unwrap();
     let new_state = LightState {
         on: Some(false),
         ..current_state
@@ -55,7 +55,7 @@ pub async fn off(bridge: &Bridge, id: &u32) {
 /// COMMAND: Toggle light with id
 ///
 pub async fn toggle(bridge: &Bridge, id: &u32) {
-    let current_state = bridge.state_for_light(id).await.unwrap();
+    let current_state = bridge.get_light_state(id).await.unwrap();
     let new_state = LightState {
         on: Some(!current_state.on.unwrap()),
         ..current_state
