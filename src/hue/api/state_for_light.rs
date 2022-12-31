@@ -1,6 +1,5 @@
-use serde::{Deserialize, Serialize};
-
 use crate::{error::AppError, hue::Bridge};
+use serde::{Deserialize, Serialize};
 
 impl Bridge {
     pub async fn state_for_light(&self, id: &u32) -> Result<LightState, AppError> {
@@ -106,9 +105,8 @@ impl LightStateBuilder {
 
 #[cfg(test)]
 mod tests {
-    use crate::hue::api::LightAlert;
-
     use super::*;
+    use crate::hue::api::LightAlert;
 
     #[test]
     fn test_lightalert_into() {

@@ -1,0 +1,273 @@
+{
+	"name": "Philips hue",
+	"zigbeechannel": 11,
+	"bridgeid": "001788FFFE491465",
+	"mac": "00:17:88:49:14:65",
+	"dhcp": true,
+	"ipaddress": "192.168.1.119",
+	"netmask": "255.255.255.0",
+	"gateway": "192.168.1.1",
+	"proxyaddress": "none",
+	"proxyport": 0,
+	"UTC": "2022-12-31T19:18:12",
+	"localtime": "2022-12-31T19:18:12",
+	"timezone": "Europe/London",
+	"modelid": "BSB002",
+	"datastoreversion": "138",
+	"swversion": "1955082050",
+	"apiversion": "1.55.0",
+	"swupdate": {
+		"updatestate": 0,
+		"checkforupdate": false,
+		"devicetypes": {
+			"bridge": false,
+			"lights": [],
+			"sensors": []
+		},
+		"url": "",
+		"text": "",
+		"notify": true
+	},
+	"swupdate2": {
+		"checkforupdate": false,
+		"lastchange": "2022-12-17T14:22:50",
+		"bridge": {
+			"state": "noupdates",
+			"lastinstall": "2022-12-15T14:45:14"
+		},
+		"state": "noupdates",
+		"autoinstall": {
+			"updatetime": "T14:00:00",
+			"on": true
+		}
+	},
+	"linkbutton": false,
+	"portalservices": true,
+	"portalconnection": "connecting",
+	"portalstate": {
+		"signedon": false,
+		"incoming": false,
+		"outgoing": false,
+		"communication": "disconnected"
+	},
+	"internetservices": {
+		"internet": "connected",
+		"remoteaccess": "connected",
+		"time": "connected",
+		"swupdate": "connected"
+	},
+	"factorynew": false,
+	"replacesbridgeid": null,
+	"backup": {
+		"status": "idle",
+		"errorcode": 0
+	},
+	"starterkitid": "",
+	"whitelist": {
+		"54d2c4f5-706f-47de-86a7-17b5c4d377f1": {
+			"last use date": "2021-10-15T18:38:07",
+			"create date": "2021-10-15T18:33:10",
+			"name": "Hue#Richards iPhone"
+		},
+		"e2e3f00f-3e7b-4840-996f-5055f0898000": {
+			"last use date": "2022-04-17T15:29:29",
+			"create date": "2021-10-15T18:38:38",
+			"name": "Hue#Richards iPhone"
+		},
+		"90b525dc-4055-425f-9e9b-5598a4d9d426": {
+			"last use date": "2021-12-02T06:37:54",
+			"create date": "2021-10-15T19:10:49",
+			"name": "Hue#Richard’s iPad"
+		},
+		"92aa5723-3d36-4fe2-b1ef-435efaf83706": {
+			"last use date": "2021-10-15T19:11:13",
+			"create date": "2021-10-15T19:11:13",
+			"name": "homebridge-hue#MacMini-M1"
+		},
+		"031be83c-c72e-4063-81d7-a6e3b4aeb7e1": {
+			"last use date": "2021-12-28T20:52:13",
+			"create date": "2021-11-25T15:36:26",
+			"name": "Hue#EB2103"
+		},
+		"730158f0-27ce-466f-90a9-15be1b7a53aa": {
+			"last use date": "2021-12-12T22:33:13",
+			"create date": "2021-11-25T18:13:44",
+			"name": "home-assistant#kingswood"
+		},
+		"959f3577-65b6-45ab-99d3-9cdbbb0eb502": {
+			"last use date": "2022-11-03T11:17:14",
+			"create date": "2022-04-10T12:49:58",
+			"name": "home-assistant#kingswood"
+		},
+		"fb82884e-ef71-4149-82d1-d6f253fa02ec": {
+			"last use date": "2022-12-31T12:05:34",
+			"create date": "2022-08-03T18:25:26",
+			"name": "Hue#Richard’s iPhone"
+		},
+		"6f5b709b-7e75-4e78-bbff-4927bc5a8bc3": {
+			"last use date": "2022-08-04T19:14:29",
+			"create date": "2022-08-04T19:14:29",
+			"name": "hue-hca-actions-on-google"
+		},
+		"2eb5d3c5-5410-4eec-84ae-494042e24b12": {
+			"last use date": "2022-12-30T16:58:03",
+			"create date": "2022-08-05T04:28:58",
+			"name": "hue-alexa-smarthome-skill-v1"
+		},
+		"8964be02-1967-46a3-900f-fd1a854e374c": {
+			"last use date": "2022-11-03T11:17:13",
+			"create date": "2022-11-03T10:10:46",
+			"name": "home-assistant#kingswood"
+		},
+		"1fa318d1-da93-4aeb-9780-bd3bdac3a785": {
+			"last use date": "2022-11-03T11:17:13",
+			"create date": "2022-11-03T10:25:40",
+			"name": "home-assistant#kingswood"
+		},
+		"43dbfb04-fa02-4974-9a40-3737fd0d42c0": {
+			"last use date": "2022-12-31T19:18:11",
+			"create date": "2022-11-03T10:28:34",
+			"name": "home-assistant#kingswood"
+		},
+		"4d101842-092a-4697-b411-10ce270bbfd7": {
+			"last use date": "2022-12-22T12:20:33",
+			"create date": "2022-12-22T12:20:33",
+			"name": "my_hue_app#iphone richard"
+		},
+		"44d43107-ac00-4442-b55f-f616954a196b": {
+			"last use date": "2022-12-23T21:25:40",
+			"create date": "2022-12-22T12:25:06",
+			"name": "my_hue_app#iphone richard"
+		},
+		"16778e7c-e423-4d25-9eed-410306cedb8f": {
+			"last use date": "2022-12-22T13:09:37",
+			"create date": "2022-12-22T13:09:37",
+			"name": "my_hue_app#iphone Richard"
+		},
+		"8ff96eef-02c4-4093-b468-df8a7415b83a": {
+			"last use date": "2022-12-22T13:11:22",
+			"create date": "2022-12-22T13:11:22",
+			"name": "my_hue_app#iphone Richard"
+		},
+		"75ac2fa6-d185-44c6-ade5-ef8478b2c1e8": {
+			"last use date": "2022-12-22T13:15:27",
+			"create date": "2022-12-22T13:15:27",
+			"name": "my_hue_app#iphone Richard"
+		},
+		"2d9d107d-e77e-40e3-9b70-9c0f9467ea31": {
+			"last use date": "2022-12-22T13:47:11",
+			"create date": "2022-12-22T13:47:11",
+			"name": "my_hue_app#iphone Richard"
+		},
+		"cc342965-a46f-47f7-9e15-009a7dbb4670": {
+			"last use date": "2022-12-22T13:51:41",
+			"create date": "2022-12-22T13:51:41",
+			"name": "my_hue_app#iphone Richard"
+		},
+		"8cae58d7-a9c5-4e21-9fac-d19c0edca9d7": {
+			"last use date": "2022-12-22T13:55:59",
+			"create date": "2022-12-22T13:55:59",
+			"name": "my_hue_app#iphone Richard"
+		},
+		"409bc291-90eb-4da2-999e-ad64889ac1e1": {
+			"last use date": "2022-12-22T14:34:21",
+			"create date": "2022-12-22T14:34:21",
+			"name": "my_hue_app#iphone Richard"
+		},
+		"292710e7-d4d8-4df6-863f-b2db3bd491bb": {
+			"last use date": "2022-12-22T14:50:21",
+			"create date": "2022-12-22T14:50:21",
+			"name": "my_hue_app#iphone Richard"
+		},
+		"4ea222a0-0a80-4f79-a250-828820cfbfac": {
+			"last use date": "2022-12-22T14:57:21",
+			"create date": "2022-12-22T14:57:21",
+			"name": "my_hue_app#iphone Richard"
+		},
+		"676c8e2a-cbcf-4beb-9cd4-c50b8fecb203": {
+			"last use date": "2022-12-22T14:58:53",
+			"create date": "2022-12-22T14:58:53",
+			"name": "my_hue_app#iphone rust_app"
+		},
+		"bb151c44-b5a5-4863-8282-0c43aaa80d11": {
+			"last use date": "2022-12-22T15:00:01",
+			"create date": "2022-12-22T15:00:01",
+			"name": "my_hue_app#iphone rust_app"
+		},
+		"b3189241-eea6-46cc-aa5b-7a5484fbe77f": {
+			"last use date": "2022-12-22T15:02:24",
+			"create date": "2022-12-22T15:02:24",
+			"name": "my_hue_app#iphone rust_app"
+		},
+		"db47adc3-2cdd-46c9-a1a3-f7b6ce4926ac": {
+			"last use date": "2022-12-24T06:53:55",
+			"create date": "2022-12-22T15:03:29",
+			"name": "my_hue_app#iphone rust_app"
+		},
+		"39b33ad6-28ea-455b-bce7-130b8fc91aec": {
+			"last use date": "2022-12-26T11:46:06",
+			"create date": "2022-12-26T11:46:06",
+			"name": "kwhue_app rust_app"
+		},
+		"8e63ef78-332e-406f-a181-94a451023ea7": {
+			"last use date": "2022-12-26T11:56:19",
+			"create date": "2022-12-26T11:56:19",
+			"name": "kwhue_app rust_app"
+		},
+		"a5de0b34-9de5-433a-b2e0-ebc97ae6162f": {
+			"last use date": "2022-12-26T12:21:04",
+			"create date": "2022-12-26T12:21:04",
+			"name": "kwhue_app rust_app"
+		},
+		"b6aabd93-bbd3-40b2-ada5-8886c9fbc1b7": {
+			"last use date": "2022-12-26T12:41:26",
+			"create date": "2022-12-26T12:41:26",
+			"name": "kwhue_app rust_app"
+		},
+		"36359ecc-4248-47c9-a6a7-ebd17e3aff00": {
+			"last use date": "2022-12-26T12:50:44",
+			"create date": "2022-12-26T12:50:44",
+			"name": "kwhue_app rust_app"
+		},
+		"23c4a0e8-5717-418c-bebd-8ba923c01325": {
+			"last use date": "2022-12-26T14:28:51",
+			"create date": "2022-12-26T12:57:52",
+			"name": "kwhue_app rust_app"
+		},
+		"64fdbafc-41f5-4e14-90e2-fd603c312eab": {
+			"last use date": "2022-12-26T16:40:39",
+			"create date": "2022-12-26T16:40:39",
+			"name": "kwhue_app rust_app"
+		},
+		"0920d7de-f272-4614-b868-6f08d62e1f43": {
+			"last use date": "2022-12-26T16:44:07",
+			"create date": "2022-12-26T16:44:07",
+			"name": "kwhue_app rust_app"
+		},
+		"a890cbfb-9760-4269-a1e8-50ba73051e4a": {
+			"last use date": "2022-12-26T16:58:25",
+			"create date": "2022-12-26T16:58:25",
+			"name": "kwhue_app rust_app"
+		},
+		"ad60fb64-385a-4b6c-b7c9-269e37e68519": {
+			"last use date": "2022-12-28T17:56:59",
+			"create date": "2022-12-26T17:07:12",
+			"name": "kwhue_app rust_app"
+		},
+		"e11eca76-b4f8-4718-bd73-fc2da4f50ea7": {
+			"last use date": "2022-12-28T06:15:38",
+			"create date": "2022-12-27T06:22:58",
+			"name": "kwhue_app rust_app"
+		},
+		"002e50b3-6ce8-406a-889f-a6f8beb10669": {
+			"last use date": "2022-12-28T17:07:53",
+			"create date": "2022-12-28T17:07:53",
+			"name": "kwhue_app rust_app"
+		},
+		"w8OLFoFsc--zu9zXzRNagZ8rrn9AhBgA9j6rnLGr": {
+			"last use date": "2022-12-31T19:18:12",
+			"create date": "2022-12-28T17:10:30",
+			"name": "kwhue_app rust_app"
+		}
+	}
+}
