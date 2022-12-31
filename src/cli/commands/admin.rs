@@ -3,10 +3,8 @@
 //! > admin init
 //! > admin check
 //!
-use crate::hue::bridge_status;
-use crate::hue::BridgeStatus;
 use crate::{
-    config::{store_app_cfg, AppConfig},
+    config::{bridge_status, store_app_cfg, AppConfig, BridgeStatus},
     hue::Bridge,
 };
 use colored::Colorize;

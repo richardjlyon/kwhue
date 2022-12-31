@@ -1,16 +1,13 @@
 //! A Hue bridge
 
-use crate::config::*;
 use crate::error::AppError;
 use colored::Colorize;
-use futures_util::{pin_mut, stream::StreamExt};
+
+use crate::config;
 use lights::LightState;
-use mdns::{Record, RecordKind};
 use reqwest::StatusCode;
-use serde::{de::DeserializeOwned, Deserialize, Serialize};
-use std::io::Write;
-use std::{collections::HashMap, net::SocketAddr, net::SocketAddrV6, time::Duration};
-use tokio::time::timeout;
+use serde::de::DeserializeOwned;
+
 use tracing::trace;
 
 pub mod api;
@@ -20,7 +17,7 @@ pub mod lights;
 ///
 #[derive(Debug)]
 pub struct Bridge {
-    pub config: AppConfig,
+    pub config: config::AppConfig,
     pub client: reqwest::Client,
     //     pub config_info: ConfigInfo,
 }
@@ -28,8 +25,8 @@ pub struct Bridge {
 impl Bridge {
     /// Create a new Hue bridge instance
     pub async fn new() -> Self {
-        if !is_configured() {
-            match configure().await {
+        if !config::is_configured() {
+            match config::configure().await {
                 Ok(_) => {}
                 Err(err) => {
                     println!("{}: {}\n", "error".red().bold(), err.to_string().bold());
@@ -38,10 +35,10 @@ impl Bridge {
             }
         }
 
-        Self::new_with_config(get_app_cfg())
+        Self::new_with_config(config::get_app_cfg())
     }
 
-    pub fn new_with_config(config: AppConfig) -> Self {
+    pub fn new_with_config(config: config::AppConfig) -> Self {
         let client = reqwest::Client::builder().build().unwrap();
 
         Self { config, client }
@@ -85,8 +82,8 @@ impl Bridge {
         }
     }
 
-    pub async fn config_info(&self) -> Result<ConfigInfo, AppError> {
-        let data: ConfigInfo = self.get("config").await?;
+    pub async fn config_info(&self) -> Result<config::ConfigInfo, AppError> {
+        let data: config::ConfigInfo = self.get("config").await?;
 
         Ok(data)
     }
@@ -100,187 +97,12 @@ impl Bridge {
         // }
         // now url 'owns' the data that was in the option variable
         match &self.config {
-            AppConfig::Uninit => Err(AppError::Other),
-            AppConfig::Unauth { ip } => Ok(format!("http://{}/api/{}", ip, endpoint)),
-            AppConfig::Auth(AuthAppConfig { ip, key }) => {
+            config::AppConfig::Uninit => Err(AppError::Other),
+            config::AppConfig::Unauth { ip } => Ok(format!("http://{}/api/{}", ip, endpoint)),
+            config::AppConfig::Auth(config::AuthAppConfig { ip, key }) => {
                 Ok(format!("http://{}/api/{}/{}", ip, key, endpoint))
             }
         }
-    }
-}
-
-/// Represents a response from the bridge
-///
-/// json example
-///
-/// { "error": {} } // Error<T>
-/// { "success": {} } // Success<T>
-#[derive(Deserialize, Debug)]
-#[serde(untagged)]
-enum Response<T, E> {
-    Error(Error<E>),
-    Success(Success<T>),
-}
-
-/// Bridge 'error' response
-#[derive(Deserialize, Debug)]
-struct Error<T> {
-    error: T,
-}
-
-/// Bridge 'sucess' response
-#[derive(Deserialize, Debug)]
-struct Success<T> {
-    success: T,
-}
-
-/// Bridge authorisation key data
-#[derive(Serialize, Deserialize, Debug)]
-pub struct AuthKeyResponse {
-    pub username: String,
-}
-
-/// Bridge error data
-#[derive(Deserialize, Debug)]
-struct BasicError {
-    #[serde(rename = "type")]
-    error_type: u32,
-    description: String,
-}
-
-#[derive(Debug)]
-pub enum BridgeStatus {
-    CONNECTED,
-    DISCONNECTED,
-}
-
-#[derive(Deserialize, Debug)]
-pub struct ConfigInfo {
-    #[serde(rename = "bridgeid")]
-    pub bridge_id: String,
-    pub apiversion: String,
-    pub swversion: String,
-    pub ipaddress: String,
-}
-
-impl ConfigInfo {
-    pub fn software_version(&self) -> String {
-        // 1.55.0 -> 1.55
-        let parts: Vec<&str> = self.apiversion.split(".").collect();
-        format!("{}.{}.{}", parts[0], parts[1], self.swversion)
-    }
-}
-
-/// Return true if config file contains an ip address and auth key.
-fn is_configured() -> bool {
-    get_app_cfg().is_configured()
-}
-
-/// Gets the IP address, creates an auth_key, and saves both to the config file.
-async fn configure() -> Result<AuthAppConfig, AppError> {
-    let ipaddr = get_bridge_socket().await?;
-    let auth_key = create_new_auth_key(ipaddr).await?;
-
-    let cfg = AuthAppConfig {
-        ip: ipaddr,
-        key: auth_key,
-    };
-
-    store_app_cfg(&AppConfig::Auth(cfg.clone()));
-
-    Ok(cfg)
-}
-/// Gets the Hue Bridge ip address.
-pub async fn get_bridge_socket() -> Result<SocketAddr, AppError> {
-    const SERVICE_NAME: &str = "_hue._tcp.local";
-
-    let responses = mdns::discover::all(SERVICE_NAME, Duration::from_secs(1))
-        .map_err(|_| AppError::Other)?
-        .listen();
-
-    pin_mut!(responses);
-
-    // if the hub is disconnected, it will timeout and block the app
-    let response = match timeout(Duration::from_secs(5), responses.next()).await {
-        Ok(r) => Ok(r),
-        Err(_) => Err(AppError::HueBridgeTimeout),
-    };
-
-    match response {
-        Ok(r) => match r {
-            Some(Ok(response)) => {
-                let addr = response.records().filter_map(self::to_socket_addr).next();
-                if let Some(addr) = addr {
-                    Ok(addr)
-                } else {
-                    Err(AppError::HueBridgeAddressNotFoundError)
-                }
-            }
-            Some(Err(_)) => todo!(),
-            None => Err(AppError::Other),
-        },
-        Err(err) => Err(err),
-    }
-}
-
-/// Creates a hub authorisation key.
-///
-/// See [Hue Configuration API](https://developers.meethue.com/develop/hue-api/7-configuration-api/)
-pub async fn create_new_auth_key(socket_addr: SocketAddr) -> Result<String, AppError> {
-    let url = format!("http://{}/api", socket_addr);
-    let client = reqwest::Client::new();
-
-    let mut params = HashMap::new();
-    params.insert("devicetype", "kwhue_app rust_app");
-
-    print!("Press link button");
-    std::io::stdout().flush().unwrap();
-
-    let response = loop {
-        let resp = client.post(&url).json(&params).send().await.unwrap();
-        let status = resp.status();
-
-        let mut data: Vec<Response<AuthKeyResponse, BasicError>> = match status {
-            StatusCode::OK => resp.json().await.map_err(|err| {
-                println!("error: {}", err);
-                AppError::HueBridgeAuthKeyInvalid
-            }),
-            StatusCode::NOT_FOUND => Err(AppError::APINotFound),
-            _ => Err(AppError::Other),
-        }
-        .unwrap();
-
-        // the hub returns an error until the link button is pressed
-        match data.pop().unwrap() {
-            Response::Error(e) => {
-                if e.error.error_type != 101 {
-                    println!("Error: {}", e.error.description);
-                }
-                tokio::time::sleep(Duration::from_secs(1)).await;
-                print!(".");
-                std::io::stdout().flush().unwrap();
-            }
-            Response::Success(s) => break s.success,
-        }
-    };
-
-    Ok(response.username)
-}
-
-///
-pub async fn bridge_status() -> BridgeStatus {
-    let result = get_bridge_socket().await;
-    match result {
-        Ok(_) => BridgeStatus::CONNECTED,
-        Err(_) => BridgeStatus::DISCONNECTED,
-    }
-}
-
-fn to_socket_addr(record: &Record) -> Option<SocketAddr> {
-    match record.kind {
-        RecordKind::A(addr) => Some(SocketAddr::new(addr.into(), 80)),
-        RecordKind::AAAA(addr) => Some(SocketAddr::new(addr.into(), 80)),
-        _ => None,
     }
 }
 
@@ -306,7 +128,7 @@ mod tests {
             .await;
 
         // set up the bridge with the mock server's ip + port (socket addr)
-        let bridge = Bridge::new_with_config(AppConfig::Auth(AuthAppConfig {
+        let bridge = Bridge::new_with_config(config::AppConfig::Auth(config::AuthAppConfig {
             key: "auth".to_string(),
             ip: mock.address().to_owned(),
             // ip: SocketAddr::V4(SocketAddrV4::new(std::net::Ipv4Addr::new(10, 1, 1, 1), 80)),
