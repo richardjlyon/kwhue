@@ -1,16 +1,13 @@
 //! A Hue bridge
 
-use crate::error::AppError;
-use colored::Colorize;
-
 use crate::config;
-// use api::lights_schemas::LightState;
+use crate::error::AppError;
+use crate::hue::api::LightState;
+use colored::Colorize;
 use reqwest::StatusCode;
 use serde::de::DeserializeOwned;
 
 use tracing::trace;
-
-use self::api::lights_schemas::LightState;
 
 pub mod api;
 
@@ -130,7 +127,7 @@ mod tests {
         }));
 
         // make a request
-        let lights = bridge.get_lights().await.unwrap();
+        let lights = bridge.lights().await.unwrap();
 
         // ensure that the api is called exactly once
         get_lights.assert_hits_async(1).await;
