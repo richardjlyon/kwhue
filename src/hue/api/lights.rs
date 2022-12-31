@@ -3,7 +3,8 @@
 ///
 /// see: https://developers.meethue.com/develop/hue-api/lights-api/#get-new-lights
 ///
-use super::{Light, LightState, LightStateBuilder, XY};
+use super::Light;
+use crate::config;
 use crate::error::AppError;
 use crate::hue::Bridge;
 use std::collections::HashMap;
@@ -21,45 +22,39 @@ impl Bridge {
 type JsonMap = HashMap<u32, Light>;
 
 ////////////////////////////////////////////////////////////////////////////////
-
 #[cfg(test)]
 mod tests {
-    use crate::hue::api::LightAlert;
-
     use super::*;
 
-    #[test]
-    fn test_lightalert_into() {
-        let m: LightAlert = "lselect".into();
-        assert_eq!(m, LightAlert::LSelect);
-    }
+    #[tokio::test]
+    async fn gets_lights() {
+        // create a mock server
+        let mock = httpmock::MockServer::start_async().await;
 
-    #[test]
-    fn test_lightalert_from() {
-        let m = LightAlert::from("lselect");
-        assert_eq!(m, LightAlert::LSelect);
-    }
+        let test_response = include_str!("test_data/lights_respon.json");
 
-    #[test]
-    fn test_serialise_on() {
-        let state = LightStateBuilder::default().on(true).build().unwrap();
+        // set up handlers for specific requests
+        let get_lights = mock
+            .mock_async(|when, then| {
+                when.method("GET").path("/api/auth/lights");
+                then.status(200).body(test_response);
+            })
+            .await;
 
-        let json_text = serde_json::to_string(&state).unwrap();
-        let expected = "{\"on\":true}";
+        // set up the bridge with the mock server's ip + port (socket addr)
+        let bridge = Bridge::new_with_config(config::AppConfig::Auth(config::AuthAppConfig {
+            key: "auth".to_string(),
+            ip: mock.address().to_owned(),
+            // ip: SocketAddr::V4(SocketAddrV4::new(std::net::Ipv4Addr::new(10, 1, 1, 1), 80)),
+        }));
 
-        assert_eq!(expected, json_text);
-    }
+        // make a request
+        let lights = bridge.lights().await.unwrap();
 
-    #[test]
-    fn test_xy() {
-        let state = LightStateBuilder::default()
-            .xy(XY { x: 3.1, y: 4.2 })
-            .build()
-            .unwrap();
+        // ensure that the api is called exactly once
+        get_lights.assert_hits_async(1).await;
 
-        let json_text = serde_json::to_string(&state).unwrap();
-        let expected = "{\"xy\":[3.1,4.2]}";
-
-        assert_eq!(expected, json_text);
+        let times_requested = get_lights.hits();
+        println!("this endpoint was hit {} times", times_requested);
     }
 }
