@@ -1,6 +1,8 @@
-use crate::hue::{lights::LightState, Bridge};
+// use crate::hue::{lights::LightState, Bridge};
 use colored::*;
 use itertools::Itertools;
+
+use crate::hue::{api::lights::LightState, Bridge};
 
 /// COMMAND: List all lights
 ///

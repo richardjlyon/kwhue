@@ -4,14 +4,13 @@ use crate::error::AppError;
 use colored::Colorize;
 
 use crate::config;
-use lights::LightState;
+use api::lights::LightState;
 use reqwest::StatusCode;
 use serde::de::DeserializeOwned;
 
 use tracing::trace;
 
 pub mod api;
-pub mod lights;
 
 /// A Hue Bridge client providing API commands
 ///
