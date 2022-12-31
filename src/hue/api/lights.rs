@@ -32,7 +32,7 @@ mod tests {
         // create a mock server
         let mock = httpmock::MockServer::start_async().await;
 
-        let test_response = include_str!("test_data/lights_respon.json");
+        let test_response = include_str!("test_data/lights.json");
 
         // set up handlers for specific requests
         let get_lights_mock = mock
@@ -54,8 +54,12 @@ mod tests {
 
         // ensure that the api is called exactly once
         get_lights_mock.assert_hits_async(1).await;
+        let l = lights[&1].clone();
 
-        let times_requested = get_lights_mock.hits();
-        println!("this endpoint was hit {} times", times_requested);
+        assert_eq!(l.capabilities.certified, true);
+        assert_eq!(l.state.on.unwrap(), true);
+        assert_eq!(l.state.brightness.unwrap(), 254);
+
+        // println!("{:#?}", lights[&1]);
     }
 }
