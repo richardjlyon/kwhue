@@ -4,11 +4,13 @@ use crate::error::AppError;
 use colored::Colorize;
 
 use crate::config;
-use api::lights::LightState;
+// use api::lights_schemas::LightState;
 use reqwest::StatusCode;
 use serde::de::DeserializeOwned;
 
 use tracing::trace;
+
+use self::api::lights_schemas::LightState;
 
 pub mod api;
 

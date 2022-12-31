@@ -2,7 +2,7 @@
 use colored::*;
 use itertools::Itertools;
 
-use crate::hue::{api::lights::LightState, Bridge};
+use crate::hue::{api::lights_schemas::LightState, Bridge};
 
 /// COMMAND: List all lights
 ///
