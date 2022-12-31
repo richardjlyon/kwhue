@@ -19,8 +19,7 @@ impl Bridge {
 
         Ok(data)
     }
-}
-impl Bridge {
+
     pub async fn get_state_for_light(&self, id: &u32) -> Result<LightState, AppError> {
         let url = format!("lights/{}", id);
         let state_response: StateResponse = self.get(&url).await?;
@@ -83,10 +82,10 @@ pub struct Range {
 
 #[derive(Deserialize, Debug, PartialEq, Hash, Clone, PartialOrd)]
 pub struct Config {
-    archetype: String,
-    direction: String,
-    function: String,
-    startup: Startup,
+    // archetype: String,
+    // direction: String,
+    // function: String,
+    // startup: Startup,
 }
 
 #[derive(Deserialize, Debug, PartialEq, Hash, Clone, PartialOrd)]
