@@ -28,25 +28,6 @@ pub struct AuthAppConfig {
 
 ////////////////////////////////////////////////////////////////////////////////
 
-#[derive(Deserialize, Debug)]
-pub struct ConfigInfo {
-    #[serde(rename = "bridgeid")]
-    pub bridge_id: String,
-    pub apiversion: String,
-    pub swversion: String,
-    pub ipaddress: String,
-}
-
-impl ConfigInfo {
-    pub fn software_version(&self) -> String {
-        // 1.55.0 -> 1.55
-        let parts: Vec<&str> = self.apiversion.split(".").collect();
-        format!("{}.{}.{}", parts[0], parts[1], self.swversion)
-    }
-}
-
-////////////////////////////////////////////////////////////////////////////////
-
 #[derive(Serialize, Deserialize, Debug)]
 #[serde(tag = "type")]
 pub enum AppConfig {

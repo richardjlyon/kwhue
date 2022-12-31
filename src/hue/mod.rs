@@ -82,12 +82,6 @@ impl Bridge {
         }
     }
 
-    pub async fn config_info(&self) -> Result<config::ConfigInfo, AppError> {
-        let data: config::ConfigInfo = self.get("config").await?;
-
-        Ok(data)
-    }
-
     fn get_url(&self, endpoint: &str) -> Result<String, AppError> {
         // if we match on the object, the internals are moved into the match statement
         // this allows you to do things like
