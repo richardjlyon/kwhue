@@ -9,60 +9,13 @@ use mdns::{Record, RecordKind};
 use reqwest::StatusCode;
 use serde::{de::DeserializeOwned, Deserialize, Serialize};
 use std::io::Write;
-use std::{
-    collections::HashMap, net::IpAddr, net::SocketAddr, net::SocketAddrV4, net::SocketAddrV6,
-    time::Duration,
-};
+use std::{collections::HashMap, net::SocketAddr, net::SocketAddrV6, time::Duration};
 use tokio::time::timeout;
 use tracing::trace;
 
 pub mod api;
 pub mod lights;
 
-/// Represents a response from the bridge
-///
-/// json example
-///
-/// { "error": {} } // Error<T>
-/// { "success": {} } // Success<T>
-#[derive(Deserialize, Debug)]
-#[serde(untagged)]
-enum Response<T, E> {
-    Error(Error<E>),
-    Success(Success<T>),
-}
-
-/// Bridge 'error' response
-#[derive(Deserialize, Debug)]
-struct Error<T> {
-    error: T,
-}
-
-/// Bridge 'sucess' response
-#[derive(Deserialize, Debug)]
-struct Success<T> {
-    success: T,
-}
-
-/// Bridge authorisation key data
-#[derive(Serialize, Deserialize, Debug)]
-pub struct AuthKeyResponse {
-    pub username: String,
-}
-
-/// Bridge error data
-#[derive(Deserialize, Debug)]
-struct BasicError {
-    #[serde(rename = "type")]
-    error_type: u32,
-    description: String,
-}
-
-#[derive(Debug)]
-pub enum BridgeStatus {
-    CONNECTED,
-    DISCONNECTED,
-}
 /// A Hue Bridge client providing API commands
 ///
 #[derive(Debug)]
@@ -70,23 +23,6 @@ pub struct Bridge {
     pub config: AppConfig,
     pub client: reqwest::Client,
     //     pub config_info: ConfigInfo,
-}
-
-#[derive(Deserialize, Debug)]
-pub struct ConfigInfo {
-    #[serde(rename = "bridgeid")]
-    pub bridge_id: String,
-    pub apiversion: String,
-    pub swversion: String,
-    pub ipaddress: String,
-}
-
-impl ConfigInfo {
-    pub fn software_version(&self) -> String {
-        // 1.55.0 -> 1.55
-        let parts: Vec<&str> = self.apiversion.split(".").collect();
-        format!("{}.{}.{}", parts[0], parts[1], self.swversion)
-    }
 }
 
 impl Bridge {
@@ -110,9 +46,7 @@ impl Bridge {
 
         Self { config, client }
     }
-}
 
-impl Bridge {
     /// Gets an endpoint response and deserialises it.
     #[tracing::instrument(skip(self))]
     pub async fn get<T: DeserializeOwned>(&self, endpoint: &str) -> Result<T, AppError> {
@@ -172,6 +106,68 @@ impl Bridge {
                 Ok(format!("http://{}/api/{}/{}", ip, key, endpoint))
             }
         }
+    }
+}
+
+/// Represents a response from the bridge
+///
+/// json example
+///
+/// { "error": {} } // Error<T>
+/// { "success": {} } // Success<T>
+#[derive(Deserialize, Debug)]
+#[serde(untagged)]
+enum Response<T, E> {
+    Error(Error<E>),
+    Success(Success<T>),
+}
+
+/// Bridge 'error' response
+#[derive(Deserialize, Debug)]
+struct Error<T> {
+    error: T,
+}
+
+/// Bridge 'sucess' response
+#[derive(Deserialize, Debug)]
+struct Success<T> {
+    success: T,
+}
+
+/// Bridge authorisation key data
+#[derive(Serialize, Deserialize, Debug)]
+pub struct AuthKeyResponse {
+    pub username: String,
+}
+
+/// Bridge error data
+#[derive(Deserialize, Debug)]
+struct BasicError {
+    #[serde(rename = "type")]
+    error_type: u32,
+    description: String,
+}
+
+#[derive(Debug)]
+pub enum BridgeStatus {
+    CONNECTED,
+    DISCONNECTED,
+}
+
+#[derive(Deserialize, Debug)]
+pub struct ConfigInfo {
+    #[serde(rename = "bridgeid")]
+    pub bridge_id: String,
+    pub apiversion: String,
+    pub swversion: String,
+    pub ipaddress: String,
+}
+
+impl ConfigInfo {
+    pub fn software_version(&self) -> String {
+        // 1.55.0 -> 1.55
+        let parts: Vec<&str> = self.apiversion.split(".").collect();
+        format!("{}.{}.{}", parts[0], parts[1], self.swversion)
     }
 }
 
@@ -288,6 +284,8 @@ fn to_socket_addr(record: &Record) -> Option<SocketAddr> {
     }
 }
 
+////////////////////////////////////////////////////////////////////////////////
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -297,905 +295,13 @@ mod tests {
         // create a mock server
         let mock = httpmock::MockServer::start_async().await;
 
+        let test_response = include_str!("test_data/lights_respon.json");
+
         // set up handlers for specific requests
         let get_lights = mock
             .mock_async(|when, then| {
                 when.method("GET").path("/api/auth/lights");
-                then.status(200).body(
-                    r#"{
-                        "1": {
-                            "state": {
-                                "on": true,
-                                "bri": 254,
-                                "ct": 366,
-                                "alert": "select",
-                                "colormode": "ct",
-                                "mode": "homeautomation",
-                                "reachable": true
-                            },
-                            "swupdate": {
-                                "state": "noupdates",
-                                "lastinstall": "2022-12-08T14:24:17"
-                            },
-                            "type": "Color temperature light",
-                            "name": "Bedroom Blue Shade",
-                            "modelid": "LTW010",
-                            "manufacturername": "Signify Netherlands B.V.",
-                            "productname": "Hue ambiance lamp",
-                            "capabilities": {
-                                "certified": true,
-                                "control": {
-                                    "mindimlevel": 1000,
-                                    "maxlumen": 806,
-                                    "ct": {
-                                        "min": 153,
-                                        "max": 454
-                                    }
-                                },
-                                "streaming": {
-                                    "renderer": false,
-                                    "proxy": false
-                                }
-                            },
-                            "config": {
-                                "archetype": "tableshade",
-                                "function": "functional",
-                                "direction": "omnidirectional",
-                                "startup": {
-                                    "mode": "safety",
-                                    "configured": true
-                                }
-                            },
-                            "uniqueid": "00:17:88:01:04:3f:19:c5-0b",
-                            "swversion": "1.101.2",
-                            "swconfigid": "683EA546",
-                            "productid": "Philips-LTW010-1-A19CTv2"
-                        },
-                        "2": {
-                            "state": {
-                                "on": true,
-                                "bri": 254,
-                                "ct": 366,
-                                "alert": "select",
-                                "colormode": "ct",
-                                "mode": "homeautomation",
-                                "reachable": true
-                            },
-                            "swupdate": {
-                                "state": "noupdates",
-                                "lastinstall": "2022-12-08T14:24:39"
-                            },
-                            "type": "Color temperature light",
-                            "name": "Office Desk Left",
-                            "modelid": "LTW001",
-                            "manufacturername": "Signify Netherlands B.V.",
-                            "productname": "Hue ambiance lamp",
-                            "capabilities": {
-                                "certified": true,
-                                "control": {
-                                    "mindimlevel": 1000,
-                                    "maxlumen": 806,
-                                    "ct": {
-                                        "min": 153,
-                                        "max": 454
-                                    }
-                                },
-                                "streaming": {
-                                    "renderer": false,
-                                    "proxy": false
-                                }
-                            },
-                            "config": {
-                                "archetype": "flexiblelamp",
-                                "function": "functional",
-                                "direction": "omnidirectional",
-                                "startup": {
-                                    "mode": "safety",
-                                    "configured": true
-                                }
-                            },
-                            "uniqueid": "00:17:88:01:02:36:fd:03-0b",
-                            "swversion": "67.101.2"
-                        },
-                        "4": {
-                            "state": {
-                                "on": false,
-                                "bri": 65,
-                                "ct": 443,
-                                "alert": "none",
-                                "colormode": "ct",
-                                "mode": "homeautomation",
-                                "reachable": true
-                            },
-                            "swupdate": {
-                                "state": "noupdates",
-                                "lastinstall": "2022-12-08T14:30:28"
-                            },
-                            "type": "Color temperature light",
-                            "name": "Lounge Piano",
-                            "modelid": "LTW001",
-                            "manufacturername": "Signify Netherlands B.V.",
-                            "productname": "Hue ambiance lamp",
-                            "capabilities": {
-                                "certified": true,
-                                "control": {
-                                    "mindimlevel": 1000,
-                                    "maxlumen": 806,
-                                    "ct": {
-                                        "min": 153,
-                                        "max": 454
-                                    }
-                                },
-                                "streaming": {
-                                    "renderer": false,
-                                    "proxy": false
-                                }
-                            },
-                            "config": {
-                                "archetype": "pendantround",
-                                "function": "functional",
-                                "direction": "omnidirectional",
-                                "startup": {
-                                    "mode": "lastonstate",
-                                    "configured": true
-                                }
-                            },
-                            "uniqueid": "00:17:88:01:02:de:7b:51-0b",
-                            "swversion": "67.101.2"
-                        },
-                        "5": {
-                            "state": {
-                                "on": false,
-                                "bri": 204,
-                                "hue": 12868,
-                                "sat": 52,
-                                "effect": "none",
-                                "xy": [
-                                    0.4578,
-                                    0.4121
-                                ],
-                                "alert": "none",
-                                "colormode": "xy",
-                                "mode": "homeautomation",
-                                "reachable": true
-                            },
-                            "swupdate": {
-                                "state": "noupdates",
-                                "lastinstall": "2021-10-19T13:26:58"
-                            },
-                            "type": "Color light",
-                            "name": "Lounge Wall Bloom",
-                            "modelid": "LLC011",
-                            "manufacturername": "Signify Netherlands B.V.",
-                            "productname": "Hue bloom",
-                            "capabilities": {
-                                "certified": true,
-                                "control": {
-                                    "mindimlevel": 10000,
-                                    "maxlumen": 120,
-                                    "colorgamuttype": "A",
-                                    "colorgamut": [
-                                        [
-                                            0.704,
-                                            0.296
-                                        ],
-                                        [
-                                            0.2151,
-                                            0.7106
-                                        ],
-                                        [
-                                            0.138,
-                                            0.08
-                                        ]
-                                    ]
-                                },
-                                "streaming": {
-                                    "renderer": true,
-                                    "proxy": false
-                                }
-                            },
-                            "config": {
-                                "archetype": "huebloom",
-                                "function": "decorative",
-                                "direction": "upwards",
-                                "startup": {
-                                    "mode": "safety",
-                                    "configured": true
-                                }
-                            },
-                            "uniqueid": "00:17:88:01:03:31:af:8a-0b",
-                            "swversion": "67.93.11"
-                        },
-                        "6": {
-                            "state": {
-                                "on": true,
-                                "bri": 100,
-                                "hue": 14814,
-                                "sat": 252,
-                                "effect": "none",
-                                "xy": [
-                                    0.5199,
-                                    0.435
-                                ],
-                                "ct": 484,
-                                "alert": "select",
-                                "colormode": "xy",
-                                "mode": "homeautomation",
-                                "reachable": true
-                            },
-                            "swupdate": {
-                                "state": "noupdates",
-                                "lastinstall": "2022-12-09T14:13:16"
-                            },
-                            "type": "Extended color light",
-                            "name": "TV Wicker Lamp",
-                            "modelid": "LCT001",
-                            "manufacturername": "Signify Netherlands B.V.",
-                            "productname": "Hue color lamp",
-                            "capabilities": {
-                                "certified": true,
-                                "control": {
-                                    "mindimlevel": 5000,
-                                    "maxlumen": 600,
-                                    "colorgamuttype": "B",
-                                    "colorgamut": [
-                                        [
-                                            0.675,
-                                            0.322
-                                        ],
-                                        [
-                                            0.409,
-                                            0.518
-                                        ],
-                                        [
-                                            0.167,
-                                            0.04
-                                        ]
-                                    ],
-                                    "ct": {
-                                        "min": 153,
-                                        "max": 500
-                                    }
-                                },
-                                "streaming": {
-                                    "renderer": true,
-                                    "proxy": false
-                                }
-                            },
-                            "config": {
-                                "archetype": "tableshade",
-                                "function": "mixed",
-                                "direction": "omnidirectional",
-                                "startup": {
-                                    "mode": "custom",
-                                    "configured": true,
-                                    "customsettings": {
-                                        "bri": 254,
-                                        "xy": [
-                                            0.4806,
-                                            0.4667
-                                        ]
-                                    }
-                                }
-                            },
-                            "uniqueid": "00:17:88:01:00:b5:3e:34-0b",
-                            "swversion": "67.101.2"
-                        },
-                        "7": {
-                            "state": {
-                                "on": true,
-                                "bri": 254,
-                                "ct": 366,
-                                "alert": "select",
-                                "colormode": "ct",
-                                "mode": "homeautomation",
-                                "reachable": true
-                            },
-                            "swupdate": {
-                                "state": "noupdates",
-                                "lastinstall": "2022-12-08T14:29:53"
-                            },
-                            "type": "Color temperature light",
-                            "name": "Office Desk Right",
-                            "modelid": "LTW001",
-                            "manufacturername": "Signify Netherlands B.V.",
-                            "productname": "Hue ambiance lamp",
-                            "capabilities": {
-                                "certified": true,
-                                "control": {
-                                    "mindimlevel": 1000,
-                                    "maxlumen": 806,
-                                    "ct": {
-                                        "min": 153,
-                                        "max": 454
-                                    }
-                                },
-                                "streaming": {
-                                    "renderer": false,
-                                    "proxy": false
-                                }
-                            },
-                            "config": {
-                                "archetype": "flexiblelamp",
-                                "function": "functional",
-                                "direction": "omnidirectional",
-                                "startup": {
-                                    "mode": "safety",
-                                    "configured": true
-                                }
-                            },
-                            "uniqueid": "00:17:88:01:02:36:fb:c6-0b",
-                            "swversion": "67.101.2"
-                        },
-                        "8": {
-                            "state": {
-                                "on": true,
-                                "bri": 254,
-                                "hue": 15380,
-                                "sat": 254,
-                                "effect": "none",
-                                "xy": [
-                                    0.5211,
-                                    0.4614
-                                ],
-                                "alert": "none",
-                                "colormode": "xy",
-                                "mode": "homeautomation",
-                                "reachable": true
-                            },
-                            "swupdate": {
-                                "state": "noupdates",
-                                "lastinstall": "2021-10-28T13:44:38"
-                            },
-                            "type": "Color light",
-                            "name": "TV Lightstrip",
-                            "modelid": "LST001",
-                            "manufacturername": "Signify Netherlands B.V.",
-                            "productname": "Hue lightstrip",
-                            "capabilities": {
-                                "certified": true,
-                                "control": {
-                                    "mindimlevel": 10000,
-                                    "maxlumen": 120,
-                                    "colorgamuttype": "A",
-                                    "colorgamut": [
-                                        [
-                                            0.704,
-                                            0.296
-                                        ],
-                                        [
-                                            0.2151,
-                                            0.7106
-                                        ],
-                                        [
-                                            0.138,
-                                            0.08
-                                        ]
-                                    ]
-                                },
-                                "streaming": {
-                                    "renderer": true,
-                                    "proxy": false
-                                }
-                            },
-                            "config": {
-                                "archetype": "huelightstrip",
-                                "function": "mixed",
-                                "direction": "omnidirectional",
-                                "startup": {
-                                    "mode": "safety",
-                                    "configured": true
-                                }
-                            },
-                            "uniqueid": "00:17:88:01:00:cf:9f:c6-0b",
-                            "swversion": "67.93.11"
-                        },
-                        "9": {
-                            "state": {
-                                "on": true,
-                                "bri": 100,
-                                "alert": "none",
-                                "mode": "homeautomation",
-                                "reachable": true
-                            },
-                            "swupdate": {
-                                "state": "noupdates",
-                                "lastinstall": "2022-12-08T14:23:15"
-                            },
-                            "type": "Dimmable light",
-                            "name": "TV Alcove 1",
-                            "modelid": "LWG004",
-                            "manufacturername": "Signify Netherlands B.V.",
-                            "productname": "Hue white spot",
-                            "capabilities": {
-                                "certified": true,
-                                "control": {
-                                    "mindimlevel": 2000,
-                                    "maxlumen": 350
-                                },
-                                "streaming": {
-                                    "renderer": false,
-                                    "proxy": false
-                                }
-                            },
-                            "config": {
-                                "archetype": "ceilinground",
-                                "function": "functional",
-                                "direction": "downwards",
-                                "startup": {
-                                    "mode": "safety",
-                                    "configured": true
-                                }
-                            },
-                            "uniqueid": "00:17:88:01:09:db:8e:d7-0b",
-                            "swversion": "1.101.7",
-                            "swconfigid": "BA9F23D6",
-                            "productid": "Philips-LWG004-3-GU10DLv2"
-                        },
-                        "10": {
-                            "state": {
-                                "on": true,
-                                "bri": 100,
-                                "alert": "none",
-                                "mode": "homeautomation",
-                                "reachable": true
-                            },
-                            "swupdate": {
-                                "state": "noupdates",
-                                "lastinstall": "2022-12-08T14:23:10"
-                            },
-                            "type": "Dimmable light",
-                            "name": "TV Alcove 2",
-                            "modelid": "LWG004",
-                            "manufacturername": "Signify Netherlands B.V.",
-                            "productname": "Hue white spot",
-                            "capabilities": {
-                                "certified": true,
-                                "control": {
-                                    "mindimlevel": 2000,
-                                    "maxlumen": 350
-                                },
-                                "streaming": {
-                                    "renderer": false,
-                                    "proxy": false
-                                }
-                            },
-                            "config": {
-                                "archetype": "ceilinground",
-                                "function": "functional",
-                                "direction": "downwards",
-                                "startup": {
-                                    "mode": "safety",
-                                    "configured": true
-                                }
-                            },
-                            "uniqueid": "00:17:88:01:09:e3:94:72-0b",
-                            "swversion": "1.101.7",
-                            "swconfigid": "BA9F23D6",
-                            "productid": "Philips-LWG004-3-GU10DLv2"
-                        },
-                        "11": {
-                            "state": {
-                                "on": true,
-                                "bri": 100,
-                                "alert": "none",
-                                "mode": "homeautomation",
-                                "reachable": true
-                            },
-                            "swupdate": {
-                                "state": "noupdates",
-                                "lastinstall": "2022-12-08T14:28:15"
-                            },
-                            "type": "Dimmable light",
-                            "name": "TV Alcove 3",
-                            "modelid": "LWG004",
-                            "manufacturername": "Signify Netherlands B.V.",
-                            "productname": "Hue white spot",
-                            "capabilities": {
-                                "certified": true,
-                                "control": {
-                                    "mindimlevel": 2000,
-                                    "maxlumen": 350
-                                },
-                                "streaming": {
-                                    "renderer": false,
-                                    "proxy": false
-                                }
-                            },
-                            "config": {
-                                "archetype": "ceilinground",
-                                "function": "functional",
-                                "direction": "downwards",
-                                "startup": {
-                                    "mode": "safety",
-                                    "configured": true
-                                }
-                            },
-                            "uniqueid": "00:17:88:01:09:e3:91:ce-0b",
-                            "swversion": "1.101.7",
-                            "swconfigid": "BA9F23D6",
-                            "productid": "Philips-LWG004-3-GU10DLv2"
-                        },
-                        "12": {
-                            "state": {
-                                "on": false,
-                                "bri": 187,
-                                "ct": 363,
-                                "alert": "select",
-                                "colormode": "ct",
-                                "mode": "homeautomation",
-                                "reachable": true
-                            },
-                            "swupdate": {
-                                "state": "noupdates",
-                                "lastinstall": "2022-12-08T14:29:50"
-                            },
-                            "type": "Color temperature light",
-                            "name": "Lobby Ceiling",
-                            "modelid": "LTW013",
-                            "manufacturername": "Signify Netherlands B.V.",
-                            "productname": "Hue ambiance spot",
-                            "capabilities": {
-                                "certified": true,
-                                "control": {
-                                    "mindimlevel": 1000,
-                                    "maxlumen": 250,
-                                    "ct": {
-                                        "min": 153,
-                                        "max": 454
-                                    }
-                                },
-                                "streaming": {
-                                    "renderer": false,
-                                    "proxy": false
-                                }
-                            },
-                            "config": {
-                                "archetype": "recessedceiling",
-                                "function": "functional",
-                                "direction": "downwards",
-                                "startup": {
-                                    "mode": "safety",
-                                    "configured": true
-                                }
-                            },
-                            "uniqueid": "00:17:88:01:06:bd:d2:d1-0b",
-                            "swversion": "1.101.2",
-                            "swconfigid": "116B9B72",
-                            "productid": "Philips-LTW013-1-GU10CTv1"
-                        },
-                        "14": {
-                            "state": {
-                                "on": false,
-                                "bri": 1,
-                                "alert": "select",
-                                "mode": "homeautomation",
-                                "reachable": true
-                            },
-                            "swupdate": {
-                                "state": "noupdates",
-                                "lastinstall": "2022-12-08T14:23:26"
-                            },
-                            "type": "Dimmable light",
-                            "name": "Hall Desk Lamp",
-                            "modelid": "LWO001",
-                            "manufacturername": "Signify Netherlands B.V.",
-                            "productname": "Hue filament bulb",
-                            "capabilities": {
-                                "certified": true,
-                                "control": {
-                                    "mindimlevel": 2000,
-                                    "maxlumen": 550
-                                },
-                                "streaming": {
-                                    "renderer": false,
-                                    "proxy": false
-                                }
-                            },
-                            "config": {
-                                "archetype": "vintagebulb",
-                                "function": "decorative",
-                                "direction": "omnidirectional",
-                                "startup": {
-                                    "mode": "safety",
-                                    "configured": true
-                                }
-                            },
-                            "uniqueid": "00:17:88:01:09:03:80:1d-0b",
-                            "swversion": "1.101.2",
-                            "swconfigid": "9732F7F5",
-                            "productid": "Philips-LWO001-1-G93CFDLv1"
-                        },
-                        "15": {
-                            "state": {
-                                "on": true,
-                                "bri": 41,
-                                "ct": 451,
-                                "alert": "select",
-                                "colormode": "ct",
-                                "mode": "homeautomation",
-                                "reachable": true
-                            },
-                            "swupdate": {
-                                "state": "noupdates",
-                                "lastinstall": "2022-12-17T14:22:46"
-                            },
-                            "type": "Color temperature light",
-                            "name": "Hall lobby",
-                            "modelid": "929003045001_03",
-                            "manufacturername": "Signify Netherlands B.V.",
-                            "productname": "Hue Milliskin spot",
-                            "capabilities": {
-                                "certified": true,
-                                "control": {
-                                    "mindimlevel": 200,
-                                    "maxlumen": 350,
-                                    "ct": {
-                                        "min": 153,
-                                        "max": 454
-                                    }
-                                },
-                                "streaming": {
-                                    "renderer": false,
-                                    "proxy": false
-                                }
-                            },
-                            "config": {
-                                "archetype": "recessedceiling",
-                                "function": "functional",
-                                "direction": "downwards",
-                                "startup": {
-                                    "mode": "lastonstate",
-                                    "configured": true
-                                }
-                            },
-                            "uniqueid": "00:17:88:01:0c:96:16:74-0b",
-                            "swversion": "1.101.7",
-                            "swconfigid": "87D6EF03",
-                            "productid": "Philips-LTG002-3-GU10CTv2"
-                        },
-                        "16": {
-                            "state": {
-                                "on": true,
-                                "bri": 41,
-                                "ct": 451,
-                                "alert": "select",
-                                "colormode": "ct",
-                                "mode": "homeautomation",
-                                "reachable": true
-                            },
-                            "swupdate": {
-                                "state": "noupdates",
-                                "lastinstall": "2022-12-17T14:22:39"
-                            },
-                            "type": "Color temperature light",
-                            "name": "Hall 1",
-                            "modelid": "929003045001_01",
-                            "manufacturername": "Signify Netherlands B.V.",
-                            "productname": "Hue Milliskin spot",
-                            "capabilities": {
-                                "certified": true,
-                                "control": {
-                                    "mindimlevel": 200,
-                                    "maxlumen": 350,
-                                    "ct": {
-                                        "min": 153,
-                                        "max": 454
-                                    }
-                                },
-                                "streaming": {
-                                    "renderer": false,
-                                    "proxy": false
-                                }
-                            },
-                            "config": {
-                                "archetype": "recessedceiling",
-                                "function": "functional",
-                                "direction": "downwards",
-                                "startup": {
-                                    "mode": "lastonstate",
-                                    "configured": true
-                                }
-                            },
-                            "uniqueid": "00:17:88:01:0c:9f:40:81-0b",
-                            "swversion": "1.101.7",
-                            "swconfigid": "87D6EF03",
-                            "productid": "Philips-LTG002-3-GU10CTv2"
-                        },
-                        "17": {
-                            "state": {
-                                "on": true,
-                                "bri": 41,
-                                "ct": 451,
-                                "alert": "select",
-                                "colormode": "ct",
-                                "mode": "homeautomation",
-                                "reachable": true
-                            },
-                            "swupdate": {
-                                "state": "noupdates",
-                                "lastinstall": "2022-12-17T14:22:39"
-                            },
-                            "type": "Color temperature light",
-                            "name": "Hall 2",
-                            "modelid": "929003045001_02",
-                            "manufacturername": "Signify Netherlands B.V.",
-                            "productname": "Hue Milliskin spot",
-                            "capabilities": {
-                                "certified": true,
-                                "control": {
-                                    "mindimlevel": 200,
-                                    "maxlumen": 350,
-                                    "ct": {
-                                        "min": 153,
-                                        "max": 454
-                                    }
-                                },
-                                "streaming": {
-                                    "renderer": false,
-                                    "proxy": false
-                                }
-                            },
-                            "config": {
-                                "archetype": "recessedceiling",
-                                "function": "functional",
-                                "direction": "downwards",
-                                "startup": {
-                                    "mode": "lastonstate",
-                                    "configured": true
-                                }
-                            },
-                            "uniqueid": "00:17:88:01:0c:9f:2e:aa-0b",
-                            "swversion": "1.101.7",
-                            "swconfigid": "87D6EF03",
-                            "productid": "Philips-LTG002-3-GU10CTv2"
-                        },
-                        "18": {
-                            "state": {
-                                "on": true,
-                                "bri": 41,
-                                "ct": 451,
-                                "alert": "select",
-                                "colormode": "ct",
-                                "mode": "homeautomation",
-                                "reachable": true
-                            },
-                            "swupdate": {
-                                "state": "noupdates",
-                                "lastinstall": "2022-12-16T14:58:04"
-                            },
-                            "type": "Color temperature light",
-                            "name": "Hall 5",
-                            "modelid": "929003045001_03",
-                            "manufacturername": "Signify Netherlands B.V.",
-                            "productname": "Hue Milliskin spot",
-                            "capabilities": {
-                                "certified": true,
-                                "control": {
-                                    "mindimlevel": 200,
-                                    "maxlumen": 350,
-                                    "ct": {
-                                        "min": 153,
-                                        "max": 454
-                                    }
-                                },
-                                "streaming": {
-                                    "renderer": false,
-                                    "proxy": false
-                                }
-                            },
-                            "config": {
-                                "archetype": "recessedceiling",
-                                "function": "functional",
-                                "direction": "downwards",
-                                "startup": {
-                                    "mode": "lastonstate",
-                                    "configured": true
-                                }
-                            },
-                            "uniqueid": "00:17:88:01:0c:96:09:98-0b",
-                            "swversion": "1.101.7",
-                            "swconfigid": "87D6EF03",
-                            "productid": "Philips-LTG002-3-GU10CTv2"
-                        },
-                        "19": {
-                            "state": {
-                                "on": true,
-                                "bri": 41,
-                                "ct": 451,
-                                "alert": "select",
-                                "colormode": "ct",
-                                "mode": "homeautomation",
-                                "reachable": true
-                            },
-                            "swupdate": {
-                                "state": "noupdates",
-                                "lastinstall": "2022-12-16T14:58:01"
-                            },
-                            "type": "Color temperature light",
-                            "name": "Hall 3",
-                            "modelid": "929003045001_01",
-                            "manufacturername": "Signify Netherlands B.V.",
-                            "productname": "Hue Milliskin spot",
-                            "capabilities": {
-                                "certified": true,
-                                "control": {
-                                    "mindimlevel": 200,
-                                    "maxlumen": 350,
-                                    "ct": {
-                                        "min": 153,
-                                        "max": 454
-                                    }
-                                },
-                                "streaming": {
-                                    "renderer": false,
-                                    "proxy": false
-                                }
-                            },
-                            "config": {
-                                "archetype": "recessedceiling",
-                                "function": "functional",
-                                "direction": "downwards",
-                                "startup": {
-                                    "mode": "lastonstate",
-                                    "configured": true
-                                }
-                            },
-                            "uniqueid": "00:17:88:01:0c:9e:72:4d-0b",
-                            "swversion": "1.101.7",
-                            "swconfigid": "87D6EF03",
-                            "productid": "Philips-LTG002-3-GU10CTv2"
-                        },
-                        "20": {
-                            "state": {
-                                "on": true,
-                                "bri": 41,
-                                "ct": 451,
-                                "alert": "select",
-                                "colormode": "ct",
-                                "mode": "homeautomation",
-                                "reachable": true
-                            },
-                            "swupdate": {
-                                "state": "noupdates",
-                                "lastinstall": "2022-12-16T15:02:58"
-                            },
-                            "type": "Color temperature light",
-                            "name": "Hall 4",
-                            "modelid": "929003045001_02",
-                            "manufacturername": "Signify Netherlands B.V.",
-                            "productname": "Hue Milliskin spot",
-                            "capabilities": {
-                                "certified": true,
-                                "control": {
-                                    "mindimlevel": 200,
-                                    "maxlumen": 350,
-                                    "ct": {
-                                        "min": 153,
-                                        "max": 454
-                                    }
-                                },
-                                "streaming": {
-                                    "renderer": false,
-                                    "proxy": false
-                                }
-                            },
-                            "config": {
-                                "archetype": "recessedceiling",
-                                "function": "functional",
-                                "direction": "downwards",
-                                "startup": {
-                                    "mode": "lastonstate",
-                                    "configured": true
-                                }
-                            },
-                            "uniqueid": "00:17:88:01:0c:96:0e:eb-0b",
-                            "swversion": "1.101.7",
-                            "swconfigid": "87D6EF03",
-                            "productid": "Philips-LTG002-3-GU10CTv2"
-                        }
-                    }"#,
-                );
+                then.status(200).body(test_response);
             })
             .await;
 
