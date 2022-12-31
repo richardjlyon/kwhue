@@ -7,7 +7,7 @@ use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 
 use crate::error::AppError;
-use crate::hue::bridge::Bridge;
+use crate::hue::Bridge;
 
 type JsonMap = HashMap<u32, Light>;
 

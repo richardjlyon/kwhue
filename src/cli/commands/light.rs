@@ -1,4 +1,4 @@
-use crate::hue::{bridge::Bridge, lights::LightState};
+use crate::hue::{lights::LightState, Bridge};
 use colored::*;
 use itertools::Itertools;
 

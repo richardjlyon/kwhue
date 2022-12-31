@@ -1,7 +1,7 @@
 use clap::Parser;
 use kwhue::cli::{commands::*, AdminSubcommands, Cli, Commands, LightSubcommands};
 use kwhue::error::AppError;
-use kwhue::hue::bridge::Bridge;
+use kwhue::hue::Bridge;
 
 #[tokio::main]
 #[tracing::instrument]
