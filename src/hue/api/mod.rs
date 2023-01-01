@@ -1,10 +1,11 @@
 use serde::{Deserialize, Serialize};
 
-use self::light_state::LightState;
+use self::get_light_state::LightState;
 
 pub mod config_info;
-pub mod light_state;
+pub mod get_light_state;
 pub mod lights;
+pub mod set_light_state;
 
 #[derive(Deserialize, Debug, PartialEq, Clone, PartialOrd)]
 pub struct Light {

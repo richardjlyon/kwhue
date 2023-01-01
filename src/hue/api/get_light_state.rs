@@ -1,9 +1,12 @@
+//! Implements the `get light state` API call
+//! https://developers.meethue.com/develop/hue-api/lights-api/#get-attr-and-state
+
 use crate::{error::AppError, hue::Bridge};
 use serde::{Deserialize, Serialize};
 
 impl Bridge {
     pub async fn get_light_state(&self, id: &u32) -> Result<LightState, AppError> {
-        let url = format!("lights/{}", id);
+        let url = format!("lights/{id}");
         let state_response: StateResponse = self.get(&url).await?;
 
         Ok(state_response.state)
@@ -73,16 +76,6 @@ pub struct XY {
     y: f32,
 }
 
-impl<'a> Deserialize<'a> for XY {
-    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
-    where
-        D: serde::Deserializer<'a>,
-    {
-        let xy: [f32; 2] = Deserialize::deserialize(deserializer)?;
-        Ok(XY { x: xy[0], y: xy[1] })
-    }
-}
-
 impl Serialize for XY {
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
     where
@@ -90,6 +83,16 @@ impl Serialize for XY {
     {
         let xy = [self.x, self.y];
         Serialize::serialize(&xy, serializer)
+    }
+}
+
+impl<'a> Deserialize<'a> for XY {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: serde::Deserializer<'a>,
+    {
+        let xy: [f32; 2] = Deserialize::deserialize(deserializer)?;
+        Ok(XY { x: xy[0], y: xy[1] })
     }
 }
 

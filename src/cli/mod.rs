@@ -62,4 +62,10 @@ pub enum LightSubcommands {
         /// The id of the light to toggle
         id: u32,
     },
+
+    /// Boogie
+    Boogie {
+        /// The id of the light to toggle
+        id: u32,
+    },
 }

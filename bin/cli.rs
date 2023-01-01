@@ -22,6 +22,7 @@ async fn main() -> Result<(), AppError> {
             LightSubcommands::Toggle { id } => light::toggle(&bridge, id).await,
             LightSubcommands::On { id } => light::on(&bridge, id).await,
             LightSubcommands::Off { id } => light::off(&bridge, id).await,
+            LightSubcommands::Boogie { id } => light::boogie(&bridge, id).await,
         },
     };
 

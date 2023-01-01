@@ -1,8 +1,9 @@
 // use crate::hue::{lights::LightState, Bridge};
+use crate::hue::api::get_light_state::LightStateBuilder;
+use crate::hue::{api::get_light_state::LightState, Bridge};
 use colored::*;
 use itertools::Itertools;
-
-use crate::hue::{api::light_state::LightState, Bridge};
+use tokio::time::{sleep, Duration};
 
 /// COMMAND: List all lights
 ///
@@ -62,4 +63,22 @@ pub async fn toggle(bridge: &Bridge, id: &u32) {
     };
     let endpoint = format!("lights/{}/state", id);
     bridge.put(&endpoint, &new_state).await.unwrap();
+}
+
+pub async fn boogie(bridge: &Bridge, id: &u32) {
+    let mut state = LightStateBuilder::default()
+        .on(true)
+        .brightness(254)
+        .hue(0)
+        .build()
+        .unwrap();
+
+    for hue in (0..65535).step(100) {
+        state.hue = Some(hue);
+        match bridge.set_light_state(&6, &state).await {
+            Ok(_) => println!("hue: {}", hue),
+            Err(err) => println!("err: {:?}", err),
+        };
+        sleep(Duration::from_millis(10)).await;
+    }
 }
